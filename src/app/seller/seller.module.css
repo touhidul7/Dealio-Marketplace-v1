@@ -1,0 +1,12 @@
+.pageHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-8); gap: var(--space-4); flex-wrap: wrap; }
+.statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); }
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--space-6); margin-bottom: var(--space-6); }
+.sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); }
+.sectionTitle { font-size: 18px; font-weight: 700; }
+.upsellGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-top: var(--space-6); }
+.upsellCard { background: linear-gradient(135deg, var(--primary-50), #fff); border: 1px solid var(--primary-100); border-radius: var(--radius-xl); padding: var(--space-6); }
+.upsellIcon { font-size: 32px; margin-bottom: var(--space-3); }
+.upsellTitle { font-size: 16px; font-weight: 700; margin-bottom: var(--space-2); }
+.upsellDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: var(--space-4); }
+@media (max-width: 1024px) { .statsGrid { grid-template-columns: repeat(2, 1fr); } .upsellGrid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .statsGrid { grid-template-columns: 1fr 1fr; } }

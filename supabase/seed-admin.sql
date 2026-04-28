@@ -1,0 +1,10 @@
+-- Run this AFTER the main migration.sql to create an admin user.
+-- Replace the email/password below with your desired admin credentials.
+-- 
+-- OPTION 1: Sign up via the UI at /signup, then run:
+--   UPDATE public.users SET role = 'admin' WHERE email = 'your-email@example.com';
+--
+-- OPTION 2: Use the Supabase Dashboard > Authentication > Users to find the user 
+--   and then run the UPDATE query above in the SQL Editor.
+--
+-- That's it! After updating the role, log in and go to /admin.

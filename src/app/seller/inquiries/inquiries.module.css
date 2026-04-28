@@ -1,0 +1,22 @@
+.layout { display: grid; grid-template-columns: 360px 1fr; gap: var(--space-5); height: calc(100vh - 200px); min-height: 500px; }
+.list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow-y: auto; }
+.item { padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-light); cursor: pointer; transition: background var(--transition-fast); position: relative; }
+.item:hover { background: var(--gray-50); }
+.itemActive { background: var(--primary-50) !important; border-left: 3px solid var(--primary); }
+.itemNew { }
+.itemTop { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.itemName { font-size: 14px; font-weight: 600; }
+.itemTime { font-size: 11px; color: var(--text-tertiary); }
+.itemListing { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
+.itemBottom { display: flex; align-items: center; gap: 8px; }
+.newDot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); margin-left: auto; }
+.detail { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow-y: auto; }
+.noSelect { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-tertiary); font-size: 14px; }
+.detailHeader { padding: var(--space-6); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+.detailName { font-size: 20px; font-weight: 700; }
+.detailBody { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6); }
+.detailSection h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: var(--space-3); }
+.detailSection p { font-size: 14px; color: var(--text-secondary); margin-bottom: 6px; }
+.detailFlags { display: flex; gap: 8px; flex-wrap: wrap; }
+.detailActions h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: var(--space-3); }
+@media (max-width: 768px) { .layout { grid-template-columns: 1fr; height: auto; } .detail { min-height: 400px; } }

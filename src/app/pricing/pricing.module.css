@@ -1,0 +1,48 @@
+.page { padding-bottom: var(--space-20); }
+.hero { background: linear-gradient(135deg, var(--gray-900), var(--primary-900)); padding: var(--space-16) 0 var(--space-12); text-align: center; margin-bottom: var(--space-12); }
+.heroTitle { font-size: 40px; font-weight: 900; color: #fff; }
+.heroSub { font-size: 18px; color: rgba(255,255,255,0.65); margin-top: var(--space-4); max-width: 560px; margin-left: auto; margin-right: auto; }
+
+.packagesGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-5); margin-bottom: var(--space-16); }
+.pkgCard { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; display: flex; flex-direction: column; position: relative; transition: all var(--transition-base); }
+.pkgCard:hover { box-shadow: var(--shadow-xl); transform: translateY(-4px); }
+.pkgPopular { border-color: var(--primary); box-shadow: var(--shadow-glow); }
+.pkgTag { position: absolute; top: 16px; right: 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; padding: 3px 10px; border-radius: var(--radius-full); }
+.pkgHeader { padding: var(--space-6); border-top: 4px solid; }
+.pkgName { font-size: 20px; font-weight: 800; margin-bottom: var(--space-3); }
+.pkgPrice { display: flex; align-items: baseline; gap: 4px; }
+.pkgAmount { font-size: 36px; font-weight: 900; font-family: var(--font-display); }
+.pkgPeriod { font-size: 14px; color: var(--text-tertiary); }
+.pkgFeatures { padding: 0 var(--space-6) var(--space-6); flex: 1; display: flex; flex-direction: column; gap: var(--space-3); }
+.pkgFeature { display: flex; align-items: flex-start; gap: var(--space-2); font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+.pkgCta { margin: 0 var(--space-6) var(--space-6); padding: 12px; border-radius: var(--radius-md); border: 2px solid; font-weight: 700; font-size: 14px; text-align: center; transition: all var(--transition-base); }
+.pkgCta:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+.addonsSection { margin-bottom: var(--space-16); }
+.addonsHeader { text-align: center; margin-bottom: var(--space-8); }
+.addonsTitle { font-size: 28px; font-weight: 800; }
+.addonsSub { font-size: 16px; color: var(--text-secondary); margin-top: var(--space-2); }
+.addonsGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); }
+.addonCard { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+.addonTop { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
+.addonName { font-size: 15px; font-weight: 700; flex: 1; }
+.addonPrice { font-size: 18px; font-weight: 800; color: var(--primary); white-space: nowrap; font-family: var(--font-display); }
+.addonDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; flex: 1; }
+
+.buyerSection { margin-bottom: var(--space-16); }
+.buyerCard { background: linear-gradient(135deg, var(--primary-50), #EBF8F3); border: 1px solid var(--primary-100); border-radius: var(--radius-2xl); padding: var(--space-10); display: grid; grid-template-columns: 1fr auto; gap: var(--space-10); align-items: center; }
+.buyerLabel { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); display: block; margin-bottom: var(--space-2); }
+.buyerTitle { font-size: 26px; font-weight: 800; margin-bottom: var(--space-3); }
+.buyerDesc { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-5); }
+.buyerList { display: flex; flex-direction: column; gap: var(--space-2); font-size: 14px; color: var(--text-secondary); }
+.buyerCtas { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.faqSection { }
+.faqTitle { font-size: 28px; font-weight: 800; text-align: center; margin-bottom: var(--space-8); }
+.faqGrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+.faqItem { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-6); }
+.faqQ { font-size: 15px; font-weight: 700; margin-bottom: var(--space-2); }
+.faqA { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+@media (max-width: 1024px) { .packagesGrid { grid-template-columns: repeat(2, 1fr); } .addonsGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) { .packagesGrid { grid-template-columns: 1fr; } .addonsGrid { grid-template-columns: 1fr; } .buyerCard { grid-template-columns: 1fr; } .faqGrid { grid-template-columns: 1fr; } .heroTitle { font-size: 28px; } }

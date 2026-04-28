@@ -1,0 +1,19 @@
+.authPage { min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: var(--space-8) var(--space-6); background: var(--bg-secondary); }
+.authCard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--space-10); max-width: 440px; width: 100%; box-shadow: var(--shadow-lg); }
+.authHeader { text-align: center; margin-bottom: var(--space-8); }
+.authLogo { display: inline-flex; margin-bottom: var(--space-4); }
+.authTitle { font-size: 24px; font-weight: 800; margin-bottom: var(--space-2); }
+.authSub { font-size: 14px; color: var(--text-secondary); }
+.authError { background: #FEF2F2; border: 1px solid var(--danger-light); color: var(--danger); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: 13px; margin-bottom: var(--space-5); }
+.authForm { display: flex; flex-direction: column; gap: 0; }
+.authForm .form-group { margin-bottom: var(--space-4); }
+.authFooter { text-align: center; margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px solid var(--border); }
+.authFooter p { font-size: 14px; color: var(--text-secondary); }
+.authLink { color: var(--primary); font-weight: 600; }
+.authLink:hover { text-decoration: underline; }
+.successIcon { font-size: 48px; margin-bottom: var(--space-4); }
+
+.roleToggle { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-6); }
+.roleBtn { padding: var(--space-3) var(--space-4); border: 2px solid var(--border); border-radius: var(--radius-lg); background: var(--bg); font-size: 14px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
+.roleBtn:hover { border-color: var(--gray-300); }
+.roleBtnActive { border-color: var(--primary); background: var(--primary-50); color: var(--primary); }

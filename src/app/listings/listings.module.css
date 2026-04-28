@@ -1,0 +1,37 @@
+.page { padding-bottom: var(--space-16); }
+.header { background: linear-gradient(135deg, var(--gray-900), var(--primary-900)); padding: var(--space-12) 0; margin-bottom: var(--space-8); }
+.title { font-size: 32px; font-weight: 800; color: #fff; }
+.subtitle { font-size: 16px; color: rgba(255,255,255,0.6); margin-top: var(--space-2); }
+
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); flex-wrap: wrap; }
+.searchForm { display: flex; gap: var(--space-2); flex: 1; max-width: 600px; }
+.searchWrap { display: flex; align-items: center; gap: var(--space-2); flex: 1; padding: 0 var(--space-3); border: 1.5px solid var(--border); border-radius: var(--radius-md); background: #fff; }
+.searchInput { border: none; outline: none; padding: 10px 0; font-size: 14px; width: 100%; background: transparent; }
+.sortWrap { display: flex; align-items: center; gap: var(--space-3); }
+.count { font-size: 13px; color: var(--text-tertiary); white-space: nowrap; }
+
+.filtersPanel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-6); animation: slideDown 0.2s ease; }
+.filterGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: all var(--transition-base); text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+.card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+.skeletonCard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+.cardImage { position: relative; height: 200px; background: var(--gray-100); overflow: hidden; }
+.cardImage img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+.card:hover .cardImage img { transform: scale(1.03); }
+.cardImagePlaceholder { display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, var(--gray-50), var(--gray-100)); }
+.featured { position: absolute; top: var(--space-3); left: var(--space-3); background: rgba(255,255,255,0.95); padding: 3px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; color: var(--cta-dark); }
+.confBadge { position: absolute; top: var(--space-3); right: var(--space-3); background: rgba(0,0,0,0.7); padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; color: #fff; }
+
+.cardBody { padding: var(--space-5); display: flex; flex-direction: column; flex: 1; }
+.cardMeta { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); flex-wrap: wrap; }
+.location { font-size: 12px; color: var(--text-tertiary); }
+.cardTitle { font-size: 17px; font-weight: 700; margin-bottom: var(--space-2); line-height: 1.3; }
+.cardSummary { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-4); flex: 1; }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.cardPrice { font-size: 20px; font-weight: 800; color: var(--primary); font-family: var(--font-display); }
+
+@media (max-width: 1024px) { .grid { grid-template-columns: repeat(2, 1fr); } .filterGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .filterGrid { grid-template-columns: 1fr; } .toolbar { flex-direction: column; align-items: stretch; } .searchForm { max-width: none; } .sortWrap { justify-content: space-between; } }
