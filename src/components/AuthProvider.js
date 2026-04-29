@@ -20,11 +20,13 @@ export default function AuthProvider({ children }) {
     if (fetchingRole.current) return;
     fetchingRole.current = true;
     try {
-      const { data: profile } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .single();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Role fetch timeout')), 5000)
+      );
+      
+      const rolePromise = supabase.from('users').select('role').eq('id', userId).single();
+      const { data: profile } = await Promise.race([rolePromise, timeoutPromise]);
+      
       if (profile) setUserRole(profile.role);
     } catch (err) {
       console.error('Failed to fetch user role:', err);
@@ -37,13 +39,20 @@ export default function AuthProvider({ children }) {
     // Single initial auth check for the entire app
     const initAuth = async () => {
       try {
-        const { data: { user: u } } = await supabase.auth.getUser();
+        // Use a timeout to prevent the app from hanging if Supabase auth lock is stuck
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth check timeout')), 3000)
+        );
+        
+        const authPromise = supabase.auth.getUser();
+        const { data: { user: u } } = await Promise.race([authPromise, timeoutPromise]);
+        
         if (u) {
           setUser(u);
           await fetchRole(u.id);
         }
       } catch (err) {
-        // Ignore lock errors on initial load — the onAuthStateChange will recover
+        // Ignore lock errors or timeouts on initial load — the onAuthStateChange will recover
         console.warn('Initial auth check:', err.message);
       } finally {
         setLoading(false);

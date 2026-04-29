@@ -51,10 +51,21 @@ export default function DashLayout({ children, role }) {
   const roleLabels = { seller: 'Seller Portal', buyer: 'Buyer Portal', admin: 'Admin Console', advisor: 'Advisor Portal' };
 
   const handleLogout = async () => {
-    const { createClient } = await import('@/lib/supabase/client');
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      
+      // Don't wait forever for signout if network is hung
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Signout timeout')), 2000))
+      ]);
+    } catch (err) {
+      console.warn('Signout issue:', err.message);
+    } finally {
+      // Always redirect, which forces a full page reload and clears in-memory state
+      window.location.href = '/';
+    }
   };
 
   if (loading) {

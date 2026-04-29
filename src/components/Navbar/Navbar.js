@@ -28,11 +28,19 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    const { createClient } = await import('@/lib/supabase/client');
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    setDropdownOpen(false);
-    window.location.href = '/';
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Signout timeout')), 2000))
+      ]);
+    } catch (err) {
+      console.warn('Signout issue:', err.message);
+    } finally {
+      setDropdownOpen(false);
+      window.location.href = '/';
+    }
   };
 
   const getDashboardLink = () => {
