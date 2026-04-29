@@ -191,10 +191,10 @@ function NewListingWizard() {
           <div className={styles.stepContent}>
             <div className={styles.field}>
               <label>Featured Image</label>
-              <div className={styles.fileUpload}>
+              <label className={styles.fileUpload}>
                 <input type="file" accept="image/*" onChange={e => setFeaturedImage(e.target.files[0])} />
                 <p>{featuredImage ? featuredImage.name : 'Choose a photo to represent your business'}</p>
-              </div>
+              </label>
             </div>
           </div>
         )}

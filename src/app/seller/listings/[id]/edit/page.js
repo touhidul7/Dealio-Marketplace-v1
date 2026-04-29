@@ -205,10 +205,10 @@ function EditListingWizard({ params }) {
                   <img src={form.featured_image_url} alt="Current" style={{width: 100, height: 60, objectFit: 'cover', borderRadius: 8}} />
                 </div>
               )}
-              <div className={styles.fileUpload}>
+              <label className={styles.fileUpload}>
                 <input type="file" accept="image/*" onChange={e => setFeaturedImage(e.target.files[0])} />
                 <p>{featuredImage ? featuredImage.name : 'Choose a new photo to replace current one'}</p>
-              </div>
+              </label>
             </div>
           </div>
         )}
