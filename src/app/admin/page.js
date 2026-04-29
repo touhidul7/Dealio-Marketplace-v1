@@ -9,40 +9,46 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, listings: 0, activeListings: 0, inquiries: 0 });
   const [pendingListings, setPendingListings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const load = async () => {
-      // For a real production app, this should be done via a secure server action
-      // or edge function using the service_role key to bypass RLS.
-      // Assuming RLS allows admin users to read all rows.
-      
-      const [
-        { count: usersCount },
-        { count: listingsCount },
-        { count: activeListingsCount },
-        { count: inquiriesCount },
-        { data: pending },
-        { data: users }
-      ] = await Promise.all([
-        supabase.from('users').select('*', { count: 'exact', head: true }),
-        supabase.from('listings').select('*', { count: 'exact', head: true }),
-        supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('inquiries').select('*', { count: 'exact', head: true }),
-        supabase.from('listings').select('*').eq('status', 'pending_review').order('created_at', { ascending: false }).limit(5),
-        supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5)
-      ]);
+      try {
+        setLoading(true);
+        const [
+          { count: usersCount },
+          { count: listingsCount },
+          { count: activeListingsCount },
+          { count: inquiriesCount },
+          { data: pending, error: pendingErr },
+          { data: users, error: usersErr }
+        ] = await Promise.all([
+          supabase.from('users').select('*', { count: 'exact', head: true }),
+          supabase.from('listings').select('*', { count: 'exact', head: true }),
+          supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+          supabase.from('inquiries').select('*', { count: 'exact', head: true }),
+          supabase.from('listings').select('*').eq('status', 'pending_review').order('created_at', { ascending: false }).limit(5),
+          supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5)
+        ]);
 
-      setStats({
-        users: usersCount || 0,
-        listings: listingsCount || 0,
-        activeListings: activeListingsCount || 0,
-        inquiries: inquiriesCount || 0
-      });
-      setPendingListings(pending || []);
-      setRecentUsers(users || []);
-      setLoading(false);
+        if (pendingErr || usersErr) {
+          console.error('Data fetch error:', pendingErr || usersErr);
+        }
+
+        setStats({
+          users: usersCount || 0,
+          listings: listingsCount || 0,
+          activeListings: activeListingsCount || 0,
+          inquiries: inquiriesCount || 0
+        });
+        setPendingListings(pending || []);
+        setRecentUsers(users || []);
+      } catch (err) {
+        console.error('Admin load failed:', err);
+        setError('Failed to load dashboard data. Please check your permissions.');
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -62,6 +68,12 @@ export default function AdminDashboard() {
           <p className="page-subtitle">Platform overview and moderation</p>
         </div>
       </div>
+
+      {error && (
+        <div style={{ padding: 20, background: '#FEF2F2', color: '#B91C1C', borderRadius: 12, marginBottom: 24, border: '1px solid #FCA5A5' }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {/* Stats */}
       <div className={styles.statsGrid}>
