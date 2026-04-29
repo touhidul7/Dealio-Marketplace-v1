@@ -10,6 +10,8 @@ export default function AdminDashboard() {
   const [pendingListings, setPendingListings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const load = async () => {
