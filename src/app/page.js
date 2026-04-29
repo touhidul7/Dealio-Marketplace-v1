@@ -105,29 +105,9 @@ export default function HomePage() {
                 </div>
               </Link>
             )) : (
-              /* Demo cards if no listings */
-              [
-                { title: 'Profitable SaaS Company', industry: 'Technology', city: 'Toronto', province: 'ON', price: 2500000, summary: 'Established SaaS platform with recurring revenue and strong growth trajectory.' },
-                { title: 'Restaurant Chain – 3 Locations', industry: 'Food & Beverage', city: 'Vancouver', province: 'BC', price: 1800000, summary: 'Well-known restaurant brand with loyal customer base and profitable operations.' },
-                { title: 'Manufacturing Business', industry: 'Manufacturing', city: 'Calgary', province: 'AB', price: 4200000, summary: 'Specialized manufacturing company with long-term contracts and modern facilities.' },
-              ].map((demo, i) => (
-                <div key={i} className={`${styles.listingCard} ${styles.demoCard}`}>
-                  <div className={styles.listingImage}>
-                    <div className={styles.listingImagePlaceholder}>
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    </div>
-                    <span className={styles.featuredBadge}>⭐ Featured</span>
-                  </div>
-                  <div className={styles.listingBody}>
-                    <div className={styles.listingMeta}>
-                      <span className="badge badge-primary">{demo.industry}</span>
-                      <span className={styles.listingLocation}>📍 {demo.city}, {demo.province}</span>
-                    </div>
-                    <h3 className={styles.listingTitle}>{demo.title}</h3>
-                    <p className={styles.listingSummary}>{demo.summary}</p>
-                    <div className={styles.listingPrice}>{formatCurrency(demo.price)}</div>
-                  </div>
-                </div>
+              /* Skeleton/Empty state */
+              [1, 2, 3].map((i) => (
+                <div key={i} className="skeleton" style={{ height: 400, borderRadius: 24 }}></div>
               ))
             )}
           </div>

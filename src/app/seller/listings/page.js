@@ -53,6 +53,18 @@ function ListingsList() {
     verifyAndLoad();
   }, [searchParams]);
 
+  const handleDeleteListing = async (id) => {
+    if (!confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
+    
+    try {
+      const { error: delErr } = await supabase.from('listings').delete().eq('id', id);
+      if (delErr) throw delErr;
+      setListings(prev => prev.filter(l => l.id !== id));
+    } catch (err) {
+      alert('Failed to delete listing: ' + err.message);
+    }
+  };
+
   if (verifying) {
     return (
       <div style={{ padding: 60, textAlign: 'center', background: 'var(--surface)', borderRadius: 20 }}>
@@ -100,7 +112,7 @@ function ListingsList() {
                     <td>
                       <div style={{display:'flex',gap:8}}>
                         <Link href={`/seller/listings/${l.id}/edit`} className="btn btn-sm btn-secondary">Edit</Link>
-                        <Link href={`/listings/${l.id}`} className="btn btn-sm btn-ghost">View</Link>
+                        <button onClick={() => handleDeleteListing(l.id)} className="btn btn-sm btn-ghost" style={{color: 'var(--error)'}}>Delete</button>
                       </div>
                     </td>
                   </tr>
