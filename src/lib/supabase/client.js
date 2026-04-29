@@ -12,11 +12,8 @@ export function createClient() {
       auth: {
         // Provide a custom no-op lock to prevent Web Locks API from freezing
         // when returning to a backgrounded tab.
-        lock: {
-          acquire: async (name, acquireCallback) => {
-            return await acquireCallback();
-          },
-          release: async (name) => {}
+        lock: async (name, acquireTimeout, fn) => {
+          return await fn();
         }
       }
     }
