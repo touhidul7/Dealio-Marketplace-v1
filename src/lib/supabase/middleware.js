@@ -29,24 +29,24 @@ export async function updateSession(request) {
     }
   )
 
-  // IMPORTANT: Do NOT call getUser() here if you can avoid it, 
-  // as it can hang the entire site if the connection is slow.
-  // Instead, just refresh the session if it exists.
-  await supabase.auth.getSession()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
   // Only protect specific paths
   const pathname = request.nextUrl.pathname
   const isProtected = pathname.startsWith('/seller') || 
                       pathname.startsWith('/admin') || 
-                      pathname.startsWith('/dashboard')
+                      pathname.startsWith('/dashboard') ||
+                      pathname.startsWith('/advisor')
 
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
+  if (isProtected) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(url)
+    }
+  } else {
+    // For public routes, we just refresh the session if it exists
+    await supabase.auth.getSession()
   }
 
   return supabaseResponse

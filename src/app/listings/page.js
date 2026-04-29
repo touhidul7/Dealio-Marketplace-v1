@@ -29,8 +29,8 @@ function ListingsContent() {
   }, [filters.sortBy]);
 
   const fetchListings = async () => {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      setError('Supabase URL is missing. Check your .env.local file.');
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setError('Supabase credentials are missing. Please check your Vercel environment variables.');
       setLoading(false);
       return;
     }
@@ -41,14 +41,15 @@ function ListingsContent() {
     let finished = false;
     const timeout = setTimeout(() => {
       if (!finished) {
-        setError('Database connection timeout. Please check if your Supabase project is active.');
+        setError('Database connection timeout. This often happens if the Supabase project is paused or there is a network issue between Vercel and Supabase.');
         setLoading(false);
       }
-    }, 6000);
+    }, 12000); // Increased to 12s for Vercel cold starts
 
     try {
-      console.log('Fetching listings from:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log('Fetching listings from Supabase...');
       let query = supabase.from('listings').select('*').eq('status', 'active');
+      
       if (filters.industry) query = query.eq('industry', filters.industry);
       if (filters.province) query = query.eq('province_state', filters.province);
       if (filters.priceMin) query = query.gte('asking_price', Number(filters.priceMin));
@@ -60,16 +61,17 @@ function ListingsContent() {
       else if (filters.sortBy === 'price_high') query = query.order('asking_price', { ascending: false });
       
       const { data, error: fetchError } = await query.limit(50);
-      if (fetchError) throw fetchError;
       
       finished = true;
-      setListings(data || []);
       clearTimeout(timeout);
+
+      if (fetchError) throw fetchError;
+      setListings(data || []);
     } catch (err) {
       console.error('Listings fetch failed:', err);
-      setError('Could not load listings. Please try again.');
+      setError(`Failed to load listings: ${err.message || 'Unknown error'}`);
     } finally {
-      setLoading(false);
+      if (finished) setLoading(false);
     }
   };
 
