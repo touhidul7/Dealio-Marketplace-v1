@@ -14,14 +14,22 @@ export default function AdminDashboard() {
   const supabase = createClient();
 
   useEffect(() => {
+    let finished = false;
+    const timeout = setTimeout(() => {
+      if (!finished) {
+        setError('Admin data is taking too long to load. This is usually caused by a recursive RLS policy in Supabase.');
+        setLoading(false);
+      }
+    }, 6000);
+
     const load = async () => {
       try {
         setLoading(true);
         const [
-          { count: usersCount },
-          { count: listingsCount },
-          { count: activeListingsCount },
-          { count: inquiriesCount },
+          { count: usersCount, error: uCountErr },
+          { count: listingsCount, error: lCountErr },
+          { count: activeListingsCount, error: aCountErr },
+          { count: inquiriesCount, error: iCountErr },
           { data: pending, error: pendingErr },
           { data: users, error: usersErr }
         ] = await Promise.all([
@@ -33,9 +41,8 @@ export default function AdminDashboard() {
           supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5)
         ]);
 
-        if (pendingErr || usersErr) {
-          console.error('Data fetch error:', pendingErr || usersErr);
-        }
+        const firstErr = uCountErr || lCountErr || aCountErr || iCountErr || pendingErr || usersErr;
+        if (firstErr) throw firstErr;
 
         setStats({
           users: usersCount || 0,
@@ -45,9 +52,11 @@ export default function AdminDashboard() {
         });
         setPendingListings(pending || []);
         setRecentUsers(users || []);
+        finished = true;
+        clearTimeout(timeout);
       } catch (err) {
         console.error('Admin load failed:', err);
-        setError('Failed to load dashboard data. Please check your permissions.');
+        setError('Dashboard error: ' + (err.message || 'Check your RLS policies'));
       } finally {
         setLoading(false);
       }

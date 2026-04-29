@@ -17,8 +17,9 @@ function CheckoutContent() {
 
   useEffect(() => {
     let isMounted = true;
+    let finished = false;
     const timeout = setTimeout(() => {
-      if (isMounted && loading && !user) {
+      if (isMounted && !finished) {
         setError('Authentication check is taking too long. Please check your connection or environment variables on Vercel.');
         setLoading(false);
       }
@@ -32,6 +33,7 @@ function CheckoutContent() {
         if (authErr || !foundUser) {
           router.push(`/signup?role=seller&package=${pkgId || 'pro'}`);
         } else {
+          finished = true;
           setUser(foundUser);
           setLoading(false);
           clearTimeout(timeout);

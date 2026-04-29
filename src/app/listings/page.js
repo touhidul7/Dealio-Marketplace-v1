@@ -14,6 +14,8 @@ function ListingsContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  const [error, setError] = useState('');
+
   useEffect(() => {
     setFilters(f => ({
       ...f,
@@ -27,19 +29,48 @@ function ListingsContent() {
   }, [filters.sortBy]);
 
   const fetchListings = async () => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      setError('Supabase URL is missing. Check your .env.local file.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    let query = supabase.from('listings').select('*').eq('status', 'active');
-    if (filters.industry) query = query.eq('industry', filters.industry);
-    if (filters.province) query = query.eq('province_state', filters.province);
-    if (filters.priceMin) query = query.gte('asking_price', Number(filters.priceMin));
-    if (filters.priceMax) query = query.lte('asking_price', Number(filters.priceMax));
-    if (filters.q) query = query.or(`title.ilike.%${filters.q}%,short_summary.ilike.%${filters.q}%,industry.ilike.%${filters.q}%`);
-    if (filters.sortBy === 'newest') query = query.order('created_at', { ascending: false });
-    else if (filters.sortBy === 'price_low') query = query.order('asking_price', { ascending: true });
-    else if (filters.sortBy === 'price_high') query = query.order('asking_price', { ascending: false });
-    const { data } = await query.limit(50);
-    setListings(data || []);
-    setLoading(false);
+    setError('');
+    
+    let finished = false;
+    const timeout = setTimeout(() => {
+      if (!finished) {
+        setError('Database connection timeout. Please check if your Supabase project is active.');
+        setLoading(false);
+      }
+    }, 6000);
+
+    try {
+      console.log('Fetching listings from:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      let query = supabase.from('listings').select('*').eq('status', 'active');
+      if (filters.industry) query = query.eq('industry', filters.industry);
+      if (filters.province) query = query.eq('province_state', filters.province);
+      if (filters.priceMin) query = query.gte('asking_price', Number(filters.priceMin));
+      if (filters.priceMax) query = query.lte('asking_price', Number(filters.priceMax));
+      if (filters.q) query = query.or(`title.ilike.%${filters.q}%,short_summary.ilike.%${filters.q}%,industry.ilike.%${filters.q}%`);
+      
+      if (filters.sortBy === 'newest') query = query.order('created_at', { ascending: false });
+      else if (filters.sortBy === 'price_low') query = query.order('asking_price', { ascending: true });
+      else if (filters.sortBy === 'price_high') query = query.order('asking_price', { ascending: false });
+      
+      const { data, error: fetchError } = await query.limit(50);
+      if (fetchError) throw fetchError;
+      
+      finished = true;
+      setListings(data || []);
+      clearTimeout(timeout);
+    } catch (err) {
+      console.error('Listings fetch failed:', err);
+      setError('Could not load listings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSearch = (e) => { e.preventDefault(); fetchListings(); };
@@ -74,6 +105,13 @@ function ListingsContent() {
             </select>
           </div>
         </div>
+
+        {error && (
+          <div style={{ padding: '20px 30px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 12, marginBottom: 24, textAlign: 'center' }}>
+            <p style={{ color: '#B91C1C', marginBottom: 12 }}>{error}</p>
+            <button className="btn btn-secondary btn-sm" onClick={fetchListings}>🔄 Try Again</button>
+          </div>
+        )}
 
         {filtersOpen && (
           <div className={styles.filtersPanel}>

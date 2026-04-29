@@ -12,26 +12,43 @@ function ListingsList() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  const [error, setError] = useState('');
+
   useEffect(() => {
     const verifyAndLoad = async () => {
-      const sessionId = searchParams.get('session_id');
+      setLoading(true);
+      setError('');
       
-      // If we just came back from Stripe, verify the session manually
-      if (sessionId && searchParams.get('checkout') === 'success') {
-        setVerifying(true);
-        try {
-          await fetch(`/api/stripe/verify-session?session_id=${sessionId}`);
-        } catch (err) {
-          console.error('Verification failed:', err);
+      const timeout = setTimeout(() => {
+        if (loading) {
+          setError('Database connection is slow. Please refresh.');
+          setLoading(false);
         }
+      }, 6000);
+
+      try {
+        const sessionId = searchParams.get('session_id');
+        if (sessionId && searchParams.get('checkout') === 'success') {
+          setVerifying(true);
+          await fetch(`/api/stripe/verify-session?session_id=${sessionId}`);
+          setVerifying(false);
+        }
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) throw new Error('Not authenticated');
+        
+        const { data, error: fetchError } = await supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false });
+        if (fetchError) throw fetchError;
+        
+        setListings(data || []);
+        clearTimeout(timeout);
+      } catch (err) {
+        console.error('Seller listings load failed:', err);
+        setError('Could not load your listings. Please refresh.');
+      } finally {
+        setLoading(false);
         setVerifying(false);
       }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false });
-      setListings(data || []);
-      setLoading(false);
     };
     verifyAndLoad();
   }, [searchParams]);
@@ -54,6 +71,11 @@ function ListingsList() {
       </div>
 
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-6)' }}>
+        {error && (
+          <div style={{ padding: 20, background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 12, marginBottom: 24, textAlign: 'center', color: '#B91C1C' }}>
+            {error}
+          </div>
+        )}
         {loading ? (
           <div className="skeleton" style={{ height: 400, borderRadius: 12 }}></div>
         ) : listings.length === 0 ? (
