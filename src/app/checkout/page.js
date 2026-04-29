@@ -7,7 +7,8 @@ import { PACKAGES } from '@/lib/constants';
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
   const supabase = createClient();
@@ -17,11 +18,19 @@ function CheckoutContent() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push(`/signup?role=seller&package=${pkgId || 'pro'}`);
-      } else {
-        setUser(user);
+      try {
+        const { data: { user }, error: authErr } = await supabase.auth.getUser();
+        if (authErr || !user) {
+          console.log('No user found, redirecting to signup...');
+          router.push(`/signup?role=seller&package=${pkgId || 'pro'}`);
+        } else {
+          setUser(user);
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+      } finally {
+        setCheckingAuth(false);
+        setLoading(false);
       }
     };
     checkUser();
@@ -31,7 +40,9 @@ function CheckoutContent() {
     setLoading(true);
     setError('');
     try {
-      if (!user) throw new Error('Not authenticated');
+      // Final sanity check for user session
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('Your session has expired. Please log in again.');
       if (!pkg || pkg.price === 0) throw new Error('Invalid package');
 
       const res = await fetch('/api/stripe/checkout', {
@@ -91,9 +102,9 @@ function CheckoutContent() {
           className="btn btn-primary btn-lg" 
           style={{ width: '100%' }} 
           onClick={handleCheckout}
-          disabled={loading}
+          disabled={loading || checkingAuth}
         >
-          {loading ? 'Processing...' : `Pay $${pkg.price} with Stripe`}
+          {loading ? (checkingAuth ? 'Checking Auth...' : 'Processing...') : `Pay $${pkg.price} with Stripe`}
         </button>
 
         {/* Dev Mode Simulation Button */}
