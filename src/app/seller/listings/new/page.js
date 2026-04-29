@@ -44,70 +44,76 @@ export default function NewListingPage() {
 
   const handleSubmit = async () => {
     setSaving(true); setError('');
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError('Not authenticated'); setSaving(false); return; }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setError('Not authenticated'); return; }
 
-    let imageUrl = null;
-    if (featuredImage) { imageUrl = await uploadImage(featuredImage, user.id); }
+      let imageUrl = null;
+      if (featuredImage) { imageUrl = await uploadImage(featuredImage, user.id); }
 
-    const payload = {
-      ...form,
-      owner_user_id: user.id,
-      owner_type: 'seller',
-      lead_owner_type: form.inquiry_routing_type === 'dealio_inbox' ? 'dealio' : 'seller',
-      status: form.package_type === 'basic' ? 'pending_review' : 'pending_review',
-      featured_image_url: imageUrl,
-      asking_price: form.asking_price ? Number(form.asking_price) : null,
-      asking_price_min: form.asking_price_min ? Number(form.asking_price_min) : null,
-      asking_price_max: form.asking_price_max ? Number(form.asking_price_max) : null,
-      annual_revenue: form.annual_revenue ? Number(form.annual_revenue) : null,
-      ebitda: form.ebitda ? Number(form.ebitda) : null,
-      cash_flow: form.cash_flow ? Number(form.cash_flow) : null,
-      employees_count: form.employees_count ? Number(form.employees_count) : null,
-      year_established: form.year_established ? Number(form.year_established) : null,
-    };
+      const payload = {
+        ...form,
+        owner_user_id: user.id,
+        owner_type: 'seller',
+        lead_owner_type: form.inquiry_routing_type === 'dealio_inbox' ? 'dealio' : 'seller',
+        status: form.package_type === 'basic' ? 'pending_review' : 'pending_review',
+        featured_image_url: imageUrl,
+        asking_price: form.asking_price ? Number(form.asking_price) : null,
+        asking_price_min: form.asking_price_min ? Number(form.asking_price_min) : null,
+        asking_price_max: form.asking_price_max ? Number(form.asking_price_max) : null,
+        annual_revenue: form.annual_revenue ? Number(form.annual_revenue) : null,
+        ebitda: form.ebitda ? Number(form.ebitda) : null,
+        cash_flow: form.cash_flow ? Number(form.cash_flow) : null,
+        employees_count: form.employees_count ? Number(form.employees_count) : null,
+        year_established: form.year_established ? Number(form.year_established) : null,
+      };
 
-    const { data, error: dbErr } = await supabase.from('listings').insert(payload).select().single();
-    if (dbErr) { setError(dbErr.message); setSaving(false); return; }
-    
-    setCreatedId(data.id);
+      const { data, error: dbErr } = await supabase.from('listings').insert(payload).select().single();
+      if (dbErr) { setError(dbErr.message); return; }
+      
+      setCreatedId(data.id);
 
-    // Trigger matching engine in background
-    fetch('/api/matching', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'evaluate_listing', listingId: data.id })
-    }).catch(console.error);
+      // Trigger matching engine in background
+      fetch('/api/matching', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'evaluate_listing', listingId: data.id })
+      }).catch(console.error);
 
-    // If a paid package is selected, go to Stripe Checkout
-    if (form.package_type === 'pro' || form.package_type === 'premium') {
-      try {
-        const res = await fetch('/api/stripe/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            packageId: form.package_type,
-            listingId: data.id,
-            userId: user.id
-          }),
-        });
-        
-        const checkoutData = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(checkoutData.error || 'Failed to initialize checkout');
+      // If a paid package is selected, go to Stripe Checkout
+      if (form.package_type === 'pro' || form.package_type === 'premium') {
+        try {
+          const res = await fetch('/api/stripe/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              packageId: form.package_type,
+              listingId: data.id,
+              userId: user.id
+            }),
+          });
+          
+          const checkoutData = await res.json();
+          
+          if (!res.ok) {
+            throw new Error(checkoutData.error || 'Failed to initialize checkout');
+          }
+          
+          // Redirect to Stripe
+          window.location.href = checkoutData.url;
+          return; // Stop here, redirecting
+        } catch (err) {
+          setError('Listing created, but payment failed to start. You can upgrade later from your dashboard. ' + err.message);
         }
-        
-        // Redirect to Stripe
-        window.location.href = checkoutData.url;
-        return; // Stop here, redirecting
-      } catch (err) {
-        setError('Listing created, but payment failed to start. You can upgrade later from your dashboard. ' + err.message);
       }
-    }
 
-    setDone(true);
-    setSaving(false);
+      setDone(true);
+    } catch (e) {
+      console.error(e);
+      setError('An unexpected error occurred: ' + e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (done) return (

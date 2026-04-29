@@ -429,13 +429,21 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.service_requests FOR EACH 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, full_name, role)
+  INSERT INTO public.users (id, email, full_name, role, phone)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'role', 'buyer')
+    COALESCE(NEW.raw_user_meta_data->>'role', 'buyer'),
+    COALESCE(NEW.raw_user_meta_data->>'phone', '')
   );
+
+  -- Create role-specific profile
+  IF COALESCE(NEW.raw_user_meta_data->>'role', 'buyer') = 'seller' THEN
+    INSERT INTO public.seller_profiles (user_id) VALUES (NEW.id);
+  ELSIF COALESCE(NEW.raw_user_meta_data->>'role', 'buyer') = 'buyer' THEN
+    INSERT INTO public.buyer_profiles (user_id) VALUES (NEW.id);
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -15,9 +15,11 @@ export default function SignupPage() {
   const preselectedRole = searchParams.get('role');
   const supabase = createClient();
 
-  if (preselectedRole && form.role !== preselectedRole && ['buyer', 'seller'].includes(preselectedRole)) {
-    setForm(f => ({ ...f, role: preselectedRole }));
-  }
+  useEffect(() => {
+    if (preselectedRole && form.role !== preselectedRole && ['buyer', 'seller'].includes(preselectedRole)) {
+      setForm(f => ({ ...f, role: preselectedRole }));
+    }
+  }, [preselectedRole]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,12 +35,6 @@ export default function SignupPage() {
     });
     if (authError) { setError(authError.message); setLoading(false); return; }
     if (data?.user) {
-      // Create role-specific profile
-      if (form.role === 'seller') {
-        await supabase.from('seller_profiles').insert({ user_id: data.user.id });
-      } else if (form.role === 'buyer') {
-        await supabase.from('buyer_profiles').insert({ user_id: data.user.id });
-      }
       setSuccess(true);
     }
     setLoading(false);
