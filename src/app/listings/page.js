@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, INDUSTRIES, PROVINCES } from '@/lib/constants';
 import styles from './listings.module.css';
 
-export default function ListingsPage() {
+function ListingsContent() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ q: '', industry: '', province: '', priceMin: '', priceMax: '', sortBy: 'newest' });
@@ -164,5 +164,13 @@ export default function ListingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ListingsPage() {
+  return (
+    <Suspense fallback={<div className="container" style={{padding: '100px 0', textAlign: 'center'}}><div className="spinner"></div><p>Loading listings...</p></div>}>
+      <ListingsContent />
+    </Suspense>
   );
 }

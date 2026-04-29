@@ -1,11 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import styles from '../auth.module.css';
 
-export default function SignupPage() {
+function SignupForm() {
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -100,5 +100,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className={styles.authPage}><div className="spinner"></div></div>}>
+      <SignupForm />
+    </Suspense>
   );
 }
