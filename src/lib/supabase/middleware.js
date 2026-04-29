@@ -44,5 +44,25 @@ export async function updateSession(request) {
     return NextResponse.redirect(url)
   }
 
+  // Role-based routing protection
+  if (user) {
+    const pathname = request.nextUrl.pathname;
+    
+    // Get role from user metadata or fallback
+    let role = user.user_metadata?.role || 'buyer';
+    if (pathname.startsWith('/admin') && role !== 'admin') {
+      return NextResponse.redirect(new URL(`/${role}`, request.url));
+    }
+    if (pathname.startsWith('/seller') && role !== 'seller' && role !== 'admin') {
+      return NextResponse.redirect(new URL(`/${role}`, request.url));
+    }
+    if (pathname.startsWith('/buyer') && role !== 'buyer' && role !== 'admin') {
+      return NextResponse.redirect(new URL(`/${role}`, request.url));
+    }
+    if (pathname.startsWith('/advisor') && role !== 'advisor' && role !== 'admin') {
+      return NextResponse.redirect(new URL(`/${role}`, request.url));
+    }
+  }
+
   return supabaseResponse
 }
