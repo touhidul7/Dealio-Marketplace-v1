@@ -17,10 +17,10 @@ export default function AdminDashboard() {
     let finished = false;
     const timeout = setTimeout(() => {
       if (!finished) {
-        setError('Admin data is taking too long to load. This is usually caused by a recursive RLS policy in Supabase.');
+        setError('Admin data is taking too long to load. This is often caused by recursive RLS policies in Supabase. Please run the fix_rls_recursion.sql migration in your Supabase SQL editor.');
         setLoading(false);
       }
-    }, 6000);
+    }, 12000); // Increased to 12s
 
     const load = async () => {
       try {

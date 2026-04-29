@@ -44,6 +44,21 @@ export async function updateSession(request) {
       url.searchParams.set('redirect', pathname)
       return NextResponse.redirect(url)
     }
+
+    // Role-based access control
+    if (pathname.startsWith('/admin')) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      
+      if (profile?.role !== 'admin') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/' // Redirect non-admins to home
+        return NextResponse.redirect(url)
+      }
+    }
   } else {
     // For public routes, we just refresh the session if it exists
     await supabase.auth.getSession()
