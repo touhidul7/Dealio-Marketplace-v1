@@ -29,39 +29,24 @@ export async function updateSession(request) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // IMPORTANT: Do NOT call getUser() here if you can avoid it, 
+  // as it can hang the entire site if the connection is slow.
+  // Instead, just refresh the session if it exists.
+  await supabase.auth.getSession()
 
-  // Protected routes
-  const protectedPaths = ['/dashboard', '/seller', '/buyer', '/admin', '/advisor']
-  const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Only protect specific paths
+  const pathname = request.nextUrl.pathname
+  const isProtected = pathname.startsWith('/seller') || 
+                      pathname.startsWith('/admin') || 
+                      pathname.startsWith('/dashboard')
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
+    url.searchParams.set('redirect', pathname)
     return NextResponse.redirect(url)
-  }
-
-  // Role-based routing protection
-  if (user) {
-    const pathname = request.nextUrl.pathname;
-    
-    // Get role from user metadata or fallback
-    let role = user.user_metadata?.role || 'buyer';
-    if (pathname.startsWith('/admin') && role !== 'admin') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url));
-    }
-    if (pathname.startsWith('/seller') && role !== 'seller' && role !== 'admin') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url));
-    }
-    if (pathname.startsWith('/buyer') && role !== 'buyer' && role !== 'admin') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url));
-    }
-    if (pathname.startsWith('/advisor') && role !== 'advisor' && role !== 'admin') {
-      return NextResponse.redirect(new URL(`/${role}`, request.url));
-    }
   }
 
   return supabaseResponse

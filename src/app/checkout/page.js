@@ -16,26 +16,36 @@ function CheckoutContent() {
   const pkg = PACKAGES.find(p => p.id === pkgId);
 
   useEffect(() => {
+    let isMounted = true;
+    const timeout = setTimeout(() => {
+      if (isMounted && loading && !user) {
+        setError('Authentication check is taking too long. Please check your connection or environment variables on Vercel.');
+        setLoading(false);
+      }
+    }, 8000);
+
     const checkUser = async () => {
-      console.log('[Checkout] Checking user session...');
       try {
         const { data: { user: foundUser }, error: authErr } = await supabase.auth.getUser();
+        if (!isMounted) return;
         
         if (authErr || !foundUser) {
-          console.log('[Checkout] No session, redirecting...');
           router.push(`/signup?role=seller&package=${pkgId || 'pro'}`);
         } else {
-          console.log('[Checkout] Session found:', foundUser.email);
           setUser(foundUser);
-          setLoading(false); // Only stop loading if we have a user
+          setLoading(false);
+          clearTimeout(timeout);
         }
       } catch (err) {
         console.error('[Checkout] Auth check crash:', err);
-        setError('Connection error. Please refresh.');
-        setLoading(false);
+        if (isMounted) {
+          setError('Could not connect to the database.');
+          setLoading(false);
+        }
       }
     };
     checkUser();
+    return () => { isMounted = false; clearTimeout(timeout); };
   }, [supabase, router, pkgId]);
 
   const handleCheckout = async () => {
@@ -49,7 +59,7 @@ function CheckoutContent() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageId: pkgId, userId: user.id }),
+        body: JSON.stringify({ packageId: pkgId, userId: currentUser.id }),
       });
 
       const { url, error: stripeError } = await res.json();
@@ -66,6 +76,23 @@ function CheckoutContent() {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '100px 20px', textAlign: 'center' }}>
+        <div className="spinner" style={{ margin: '0 auto 20px' }}></div>
+        <h2>Verifying Account...</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>
+          {error ? error : "This usually takes a second."}
+        </p>
+        {error && (
+          <button className="btn btn-secondary" style={{ marginTop: 20 }} onClick={() => window.location.reload()}>
+            🔄 Reload Page
+          </button>
+        )}
+      </div>
+    );
+  }
 
   if (!pkg || pkg.price === 0) {
     return (
@@ -105,7 +132,7 @@ function CheckoutContent() {
           onClick={handleCheckout}
           disabled={loading}
         >
-          {loading ? (user ? 'Processing...' : 'Verifying Account...') : `Pay $${pkg.price} with Stripe`}
+          {loading ? 'Processing...' : `Pay $${pkg.price} with Stripe`}
         </button>
 
         {/* Dev Mode Simulation Button */}
