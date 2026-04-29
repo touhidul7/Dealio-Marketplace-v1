@@ -1,44 +1,17 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
-  const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const { user, userRole } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
-  const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
-        if (profile) setUserRole(profile.role);
-      }
-    };
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: profile } = await supabase.from('users').select('role').eq('id', session.user.id).single();
-        if (profile) setUserRole(profile.role);
-      } else {
-        setUser(null);
-        setUserRole(null);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -55,6 +28,8 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
     await supabase.auth.signOut();
     setDropdownOpen(false);
     window.location.href = '/';

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES } from '@/lib/constants';
 import styles from './seller.module.css';
 
@@ -9,12 +10,12 @@ export default function SellerDashboard() {
   const [listings, setListings] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
+    if (!user) return;
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const [{ data: l }, { data: i }] = await Promise.all([
         supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('inquiries').select('*, listings(title)').in('listing_id',
@@ -26,7 +27,7 @@ export default function SellerDashboard() {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
   const active = listings.filter(l => l.status === 'active').length;
   const draft = listings.filter(l => l.status === 'draft').length;

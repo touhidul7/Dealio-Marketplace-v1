@@ -2,23 +2,24 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency } from '@/lib/constants';
 
 export default function BuyerSavedPage() {
   const [saved, setSaved] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
+    if (!user) return;
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const { data } = await supabase.from('saved_listings').select('*, listings(id, title, industry, city, province_state, asking_price, featured_image_url)').eq('user_id', user.id).order('created_at', { ascending: false });
       setSaved(data || []);
       setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
   return (
     <div>

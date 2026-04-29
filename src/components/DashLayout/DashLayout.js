@@ -1,25 +1,21 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import styles from './DashLayout.module.css';
 
 export default function DashLayout({ children, role }) {
-  const [user, setUser] = useState(null);
+  const { user, loading } = useAuth();
   const [sideOpen, setSideOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser();
-      if (!u) { router.push('/login'); return; }
-      setUser(u);
-    };
-    getUser();
-  }, []);
+  // Redirect if not logged in (after loading completes)
+  if (!loading && !user) {
+    router.push('/login');
+    return null;
+  }
 
   const navItems = {
     seller: [
@@ -55,9 +51,15 @@ export default function DashLayout({ children, role }) {
   const roleLabels = { seller: 'Seller Portal', buyer: 'Buyer Portal', admin: 'Admin Console', advisor: 'Advisor Portal' };
 
   const handleLogout = async () => {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
     await supabase.auth.signOut();
     window.location.href = '/';
   };
+
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
+  }
 
   return (
     <div className={styles.layout}>

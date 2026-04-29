@@ -2,17 +2,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency } from '@/lib/constants';
 
 export default function BuyerMatchesPage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
+    if (!user) return;
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const { data: bp } = await supabase.from('buyer_profiles').select('id').eq('user_id', user.id).single();
       if (bp) {
         const { data } = await supabase.from('matches').select('*, listings(id, title, industry, city, province_state, asking_price, featured_image_url)').eq('buyer_profile_id', bp.id).order('total_score', { ascending: false });
@@ -21,7 +22,7 @@ export default function BuyerMatchesPage() {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
   return (
     <div>

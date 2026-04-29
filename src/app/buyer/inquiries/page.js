@@ -2,23 +2,24 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { timeAgo, INQUIRY_STATUSES } from '@/lib/constants';
 
 export default function BuyerInquiriesPage() {
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
+    if (!user) return;
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const { data } = await supabase.from('inquiries').select('*, listings(title)').eq('buyer_user_id', user.id).order('created_at', { ascending: false });
       setInquiries(data || []);
       setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
   return (
     <div>

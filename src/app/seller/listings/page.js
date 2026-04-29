@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo, LISTING_STATUSES } from '@/lib/constants';
 
 function ListingsList() {
@@ -10,22 +11,16 @@ function ListingsList() {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const supabase = createClient();
 
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!user) return;
     const verifyAndLoad = async () => {
       setLoading(true);
       setError('');
-      
-      const timeout = setTimeout(() => {
-        if (loading) {
-          setError('Database connection is slow. Please refresh.');
-          setLoading(false);
-        }
-      }, 6000);
-
       try {
         const sessionId = searchParams.get('session_id');
         if (sessionId && searchParams.get('checkout') === 'success') {
@@ -33,15 +28,9 @@ function ListingsList() {
           await fetch(`/api/stripe/verify-session?session_id=${sessionId}`);
           setVerifying(false);
         }
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) throw new Error('Not authenticated');
-        
         const { data, error: fetchError } = await supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false });
         if (fetchError) throw fetchError;
-        
         setListings(data || []);
-        clearTimeout(timeout);
       } catch (err) {
         console.error('Seller listings load failed:', err);
         setError('Could not load your listings. Please refresh.');
@@ -51,7 +40,7 @@ function ListingsList() {
       }
     };
     verifyAndLoad();
-  }, [searchParams]);
+  }, [user, searchParams]);
 
   const [isDeleting, setIsDeleting] = useState(null);
   const [confirmId, setConfirmId] = useState(null);

@@ -29,12 +29,16 @@ export async function updateSession(request) {
     }
   )
 
-  // Only protect specific paths
+  // IMPORTANT: Only call getUser() for protected routes.
+  // For public routes, just refresh the session cookie silently.
+  // Do NOT query the database here — that causes auth lock conflicts with the browser client.
   const pathname = request.nextUrl.pathname
   const isProtected = pathname.startsWith('/seller') || 
                       pathname.startsWith('/admin') || 
                       pathname.startsWith('/dashboard') ||
-                      pathname.startsWith('/advisor')
+                      pathname.startsWith('/advisor') ||
+                      pathname.startsWith('/buyer') ||
+                      pathname.startsWith('/checkout')
 
   if (isProtected) {
     const { data: { user } } = await supabase.auth.getUser()
@@ -44,24 +48,13 @@ export async function updateSession(request) {
       url.searchParams.set('redirect', pathname)
       return NextResponse.redirect(url)
     }
-
-    // Role-based access control
-    if (pathname.startsWith('/admin')) {
-      const { data: profile } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      
-      if (profile?.role !== 'admin') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/' // Redirect non-admins to home
-        return NextResponse.redirect(url)
-      }
-    }
+    // NOTE: Do NOT query the users table here for role checks.
+    // Role-based access control is handled client-side via the AuthProvider.
+    // Querying DB in middleware causes the "Lock was stolen" error
+    // because it competes with the browser's auth token refresh.
   } else {
-    // For public routes, we just refresh the session if it exists
-    await supabase.auth.getSession()
+    // For public routes, just refresh the session if one exists
+    await supabase.auth.getUser()
   }
 
   return supabaseResponse

@@ -19,14 +19,14 @@ function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError) {
       setError(authError.message);
       setLoading(false);
       return;
     }
-    // Get role to redirect
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use the user from the sign-in response directly — do NOT call getUser() again
+    const user = data?.user;
     if (user) {
       const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
       if (redirect) { router.push(redirect); }

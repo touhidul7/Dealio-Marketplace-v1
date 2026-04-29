@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { timeAgo, INQUIRY_STATUSES } from '@/lib/constants';
 import styles from './inquiries.module.css';
 
@@ -8,12 +9,12 @@ export default function SellerInquiriesPage() {
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const { user } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
+    if (!user) return;
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
       const { data: myListings } = await supabase.from('listings').select('id').eq('owner_user_id', user.id);
       const ids = myListings?.map(l => l.id) || [];
       if (ids.length === 0) { setLoading(false); return; }
@@ -22,7 +23,7 @@ export default function SellerInquiriesPage() {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
   const updateStatus = async (id, status) => {
     await supabase.from('inquiries').update({ inquiry_status: status }).eq('id', id);

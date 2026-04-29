@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { INDUSTRIES, PROVINCES, BUYER_TYPES } from '@/lib/constants';
 import styles from './profile.module.css';
 
@@ -10,19 +11,19 @@ export default function BuyerProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSavedFlag] = useState(false);
+  const { user } = useAuth();
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
+    if (!user) return;
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
       const { data } = await supabase.from('buyer_profiles').select('*').eq('user_id', user.id).single();
       if (data) setForm(f => ({ ...f, ...data, industry_focus: data.industry_focus || [], geographic_focus: data.geographic_focus || [] }));
       setLoading(false);
     };
     load();
-  }, []);
+  }, [user]);
 
   const toggleArr = (field, val) => setForm(f => ({ ...f, [field]: f[field].includes(val) ? f[field].filter(x => x !== val) : [...f[field], val] }));
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -34,9 +35,8 @@ export default function BuyerProfilePage() {
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    setSaving(true);
     const completion = calcCompletion();
     const payload = { ...form, user_id: user.id, profile_completion_percent: completion, deal_size_min: form.deal_size_min ? Number(form.deal_size_min) : null, deal_size_max: form.deal_size_max ? Number(form.deal_size_max) : null, revenue_min: form.revenue_min ? Number(form.revenue_min) : null, revenue_max: form.revenue_max ? Number(form.revenue_max) : null, ebitda_min: form.ebitda_min ? Number(form.ebitda_min) : null, ebitda_max: form.ebitda_max ? Number(form.ebitda_max) : null };
     const { data: upsertData, error } = await supabase.from('buyer_profiles').upsert(payload, { onConflict: 'user_id', returning: 'representation' }).select().single();
