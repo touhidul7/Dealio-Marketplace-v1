@@ -16,7 +16,7 @@
 
 .nav { display: flex; align-items: center; gap: var(--space-1); }
 .navLink { padding: var(--space-2) var(--space-3); font-size: 14px; font-weight: 500; color: var(--text-secondary); border-radius: var(--radius-md); transition: all var(--transition-fast); }
-.navLink:hover { color: var(--text-primary); background: var(--gray-50); }
+.navLink:hover { color: var(--text-primary); background: #bbbbbb; }
 .navLink.active { color: var(--primary); font-weight: 600; }
 
 .actions { display: flex; align-items: center; gap: var(--space-3); }

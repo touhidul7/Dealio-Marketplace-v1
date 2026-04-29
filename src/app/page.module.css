@@ -1,7 +1,7 @@
 .page { }
 
 /* Hero */
-.hero { position: relative; padding: 120px 0 80px; overflow: hidden; min-height: 600px; display: flex; align-items: center; }
+.hero { position: relative; padding: 120px 0 80px; overflow: hidden; min-height: 600px; display: flex; align-items: center; margin-top: -64px; }
 .heroBg { position: absolute; inset: 0; background: linear-gradient(135deg, #0A1628 0%, #0F2847 40%, #0F52BA 100%); z-index: 0; }
 .heroBg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 20%, rgba(59,125,221,0.3) 0%, transparent 60%), radial-gradient(ellipse at 30% 80%, rgba(16,185,129,0.15) 0%, transparent 50%); }
 .heroContent { position: relative; z-index: 1; max-width: var(--container-max); margin: 0 auto; padding: 0 var(--space-6); text-align: center; }
