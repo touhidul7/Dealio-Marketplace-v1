@@ -53,15 +53,37 @@ function ListingsList() {
     verifyAndLoad();
   }, [searchParams]);
 
-  const handleDeleteListing = async (id) => {
-    if (!confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
+  const [isDeleting, setIsDeleting] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+
+  const handleDeleteListing = async (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (confirmId !== id) {
+      setConfirmId(id);
+      // Auto-reset after 10 seconds
+      setTimeout(() => setConfirmId(null), 10000);
+      return;
+    }
     
+    setIsDeleting(id);
     try {
+      console.log('Attempting to delete listing:', id);
       const { error: delErr } = await supabase.from('listings').delete().eq('id', id);
-      if (delErr) throw delErr;
+      
+      if (delErr) {
+        console.error('Supabase Delete Error:', delErr);
+        throw delErr;
+      }
+      
       setListings(prev => prev.filter(l => l.id !== id));
+      setConfirmId(null);
     } catch (err) {
-      alert('Failed to delete listing: ' + err.message);
+      console.error('Delete operation failed:', err);
+      alert('Delete failed. Error: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -112,7 +134,21 @@ function ListingsList() {
                     <td>
                       <div style={{display:'flex',gap:8}}>
                         <Link href={`/seller/listings/${l.id}/edit`} className="btn btn-sm btn-secondary">Edit</Link>
-                        <button onClick={() => handleDeleteListing(l.id)} className="btn btn-sm btn-ghost" style={{color: 'var(--error)'}}>Delete</button>
+                        <button 
+                          onClick={(e) => handleDeleteListing(e, l.id)} 
+                          className="btn btn-sm" 
+                          style={{
+                            minWidth: 100,
+                            color: confirmId === l.id ? '#ffffff' : 'var(--error)',
+                            background: confirmId === l.id ? '#dc2626' : 'transparent',
+                            border: confirmId === l.id ? '1px solid #dc2626' : '1px solid transparent',
+                            fontWeight: confirmId === l.id ? '600' : '400',
+                            transition: 'all 0.2s ease'
+                          }}
+                          disabled={isDeleting === l.id}
+                        >
+                          {isDeleting === l.id ? 'Deleting...' : (confirmId === l.id ? 'Click to Confirm' : 'Delete')}
+                        </button>
                       </div>
                     </td>
                   </tr>
