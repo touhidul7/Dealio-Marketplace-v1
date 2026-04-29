@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
 import styles from './pricing.module.css';
 
 const packages = [
@@ -39,7 +40,30 @@ const addons = [
 
 export const metadata = { title: 'Pricing – Dealio Marketplace', description: 'Choose the right listing package for your business sale. From free basic listings to full advisory representation.' };
 
-export default function PricingPage() {
+export default async function PricingPage({ searchParams }) {
+  const supabase = await createClient();
+  const upgradeId = searchParams?.upgrade;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const role = user?.user_metadata?.role;
+
+  // Fetch listings if seller
+  let userListings = [];
+  if (user && role === 'seller') {
+    const { data } = await supabase.from('listings').select('id, title').eq('owner_user_id', user.id);
+    userListings = data || [];
+  }
+
+  const getHref = (pkg) => {
+    if (pkg.id === 'full_advisory') return '/#contact';
+    
+    if (user && (role === 'seller' || role === 'admin')) {
+      // Direct to account-level checkout
+      return `/checkout?package=${pkg.id}`;
+    }
+    return pkg.href;
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
@@ -73,7 +97,7 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href={pkg.href} className={styles.pkgCta} style={{ background: pkg.id !== 'basic' ? pkg.color : 'transparent', color: pkg.id === 'basic' ? pkg.color : '#fff', borderColor: pkg.color }}>
+              <Link href={getHref(pkg)} className={styles.pkgCta} style={{ background: pkg.id !== 'basic' ? pkg.color : 'transparent', color: pkg.id === 'basic' ? pkg.color : '#fff', borderColor: pkg.color }}>
                 {pkg.cta}
               </Link>
             </div>

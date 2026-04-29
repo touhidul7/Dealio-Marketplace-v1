@@ -1,24 +1,50 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, timeAgo, LISTING_STATUSES } from '@/lib/constants';
 
-export default function SellerListingsPage() {
+function ListingsList() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   useEffect(() => {
-    const load = async () => {
+    const verifyAndLoad = async () => {
+      const sessionId = searchParams.get('session_id');
+      
+      // If we just came back from Stripe, verify the session manually
+      if (sessionId && searchParams.get('checkout') === 'success') {
+        setVerifying(true);
+        try {
+          await fetch(`/api/stripe/verify-session?session_id=${sessionId}`);
+        } catch (err) {
+          console.error('Verification failed:', err);
+        }
+        setVerifying(false);
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false });
       setListings(data || []);
       setLoading(false);
     };
-    load();
-  }, []);
+    verifyAndLoad();
+  }, [searchParams]);
+
+  if (verifying) {
+    return (
+      <div style={{ padding: 60, textAlign: 'center', background: 'var(--surface)', borderRadius: 20 }}>
+        <div className="spinner" style={{ margin: '0 auto 20px' }}></div>
+        <h3>Confirming your purchase...</h3>
+        <p style={{ color: 'var(--text-secondary)' }}>Just a moment while we update your account.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -63,5 +89,13 @@ export default function SellerListingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SellerListingsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 60, textAlign: 'center' }}>Loading...</div>}>
+      <ListingsList />
+    </Suspense>
   );
 }

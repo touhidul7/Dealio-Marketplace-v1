@@ -27,35 +27,54 @@ export async function POST(req) {
     const session = event.data.object;
     
     const userId = session.metadata.userId;
-    const listingId = session.metadata.listingId;
+    const listingId = session.metadata.listingId || null;
     const packageType = session.metadata.packageType;
-    const amount = session.amount_total / 100;
+    const amount = (session.amount_total || 0) / 100;
 
-    console.log(`Payment successful for user ${userId}, package ${packageType}, listing ${listingId}`);
+    console.log('[Webhook] Processing completion for:', { userId, listingId, packageType, amount });
 
     // Insert purchase record
-    const { error: purchaseError } = await supabase.from('purchases').insert({
+    const { data: purchaseData, error: purchaseError } = await supabase.from('package_purchases').insert({
       user_id: userId,
-      listing_id: listingId !== 'new' ? listingId : null,
-      package_type: packageType,
+      listing_id: (listingId && listingId !== 'new') ? listingId : null,
+      product_type: 'seller_package',
+      product_name: packageType,
       amount: amount,
-      status: 'completed',
-      stripe_session_id: session.id,
-    });
+      currency: 'cad',
+      payment_status: 'completed',
+      stripe_checkout_session_id: session.id,
+    }).select();
 
     if (purchaseError) {
-      console.error('Error inserting purchase:', purchaseError);
+      console.error('[Webhook] Error inserting purchase record:', purchaseError);
+    } else {
+      console.log('[Webhook] Purchase record inserted successfully:', purchaseData);
     }
 
-    // If a listing ID was provided, upgrade its package
+    // Update the user's account-level package
+    console.log('[Webhook] Updating user package tier:', userId, packageType);
+    const { error: userError } = await supabase
+      .from('users')
+      .update({ 
+        package_type: packageType,
+        package_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      })
+      .eq('id', userId);
+
+    if (userError) {
+      console.error('[Webhook] Error updating user package (Check if package_type column exists!):', userError);
+    }
+
+    // If a listing ID was provided, upgrade its package specifically
     if (listingId && listingId !== 'new') {
+      console.log('[Webhook] Upgrading specific listing:', listingId);
       const { error: listingError } = await supabase
         .from('listings')
         .update({ package_type: packageType })
         .eq('id', listingId);
         
       if (listingError) {
-        console.error('Error updating listing package:', listingError);
+        console.error('[Webhook] Error updating listing package:', listingError);
       }
     }
   }

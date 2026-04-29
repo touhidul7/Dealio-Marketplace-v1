@@ -1,0 +1,34 @@
+.optionCard {
+  padding: 32px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.optionCard:hover {
+  border-color: var(--primary);
+  background: var(--primary-50);
+  box-shadow: var(--shadow-md);
+}
+
+.listingRow {
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.listingRow:hover {
+  border-color: var(--primary);
+  background: var(--primary-50);
+}

@@ -98,6 +98,17 @@ export default function SellerDashboard() {
                     <td>
                       <div style={{display:'flex',gap:8}}>
                         <Link href={`/seller/listings/${l.id}/edit`} className="btn btn-sm btn-secondary">Edit</Link>
+                        {l.package_type === 'basic' && (
+                          <button 
+                            className="btn btn-sm btn-accent" 
+                            onClick={async () => {
+                              // Direct to pricing to pick a plan
+                              window.location.href = `/pricing?upgrade=${l.id}`;
+                            }}
+                          >
+                            Upgrade
+                          </button>
+                        )}
                         <Link href={`/listings/${l.id}`} className="btn btn-sm btn-ghost">View</Link>
                       </div>
                     </td>
