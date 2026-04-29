@@ -8,7 +8,6 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
   const supabase = createClient();
@@ -18,18 +17,21 @@ function CheckoutContent() {
 
   useEffect(() => {
     const checkUser = async () => {
+      console.log('[Checkout] Checking user session...');
       try {
-        const { data: { user }, error: authErr } = await supabase.auth.getUser();
-        if (authErr || !user) {
-          console.log('No user found, redirecting to signup...');
+        const { data: { user: foundUser }, error: authErr } = await supabase.auth.getUser();
+        
+        if (authErr || !foundUser) {
+          console.log('[Checkout] No session, redirecting...');
           router.push(`/signup?role=seller&package=${pkgId || 'pro'}`);
         } else {
-          setUser(user);
+          console.log('[Checkout] Session found:', foundUser.email);
+          setUser(foundUser);
+          setLoading(false); // Only stop loading if we have a user
         }
       } catch (err) {
-        console.error('Auth check failed:', err);
-      } finally {
-        setCheckingAuth(false);
+        console.error('[Checkout] Auth check crash:', err);
+        setError('Connection error. Please refresh.');
         setLoading(false);
       }
     };
@@ -40,7 +42,6 @@ function CheckoutContent() {
     setLoading(true);
     setError('');
     try {
-      // Final sanity check for user session
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) throw new Error('Your session has expired. Please log in again.');
       if (!pkg || pkg.price === 0) throw new Error('Invalid package');
@@ -102,9 +103,9 @@ function CheckoutContent() {
           className="btn btn-primary btn-lg" 
           style={{ width: '100%' }} 
           onClick={handleCheckout}
-          disabled={loading || checkingAuth}
+          disabled={loading}
         >
-          {loading ? (checkingAuth ? 'Checking Auth...' : 'Processing...') : `Pay $${pkg.price} with Stripe`}
+          {loading ? (user ? 'Processing...' : 'Verifying Account...') : `Pay $${pkg.price} with Stripe`}
         </button>
 
         {/* Dev Mode Simulation Button */}
