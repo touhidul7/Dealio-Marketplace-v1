@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   role TEXT NOT NULL DEFAULT 'buyer' CHECK (role IN ('buyer', 'seller', 'advisor', 'broker', 'admin')),
   avatar_url TEXT,
   email_verified BOOLEAN DEFAULT FALSE,
+  package_type TEXT DEFAULT 'basic',
+  package_expiry TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -35,7 +35,16 @@ function SignupForm() {
     });
     if (authError) { setError(authError.message); setLoading(false); return; }
     if (data?.user) {
-      setSuccess(true);
+      if (data.session) {
+        // Email confirmation is OFF, user is already logged in
+        const role = form.role;
+        if (role === 'admin') router.push('/admin');
+        else if (role === 'advisor') router.push('/advisor');
+        else if (role === 'seller') router.push('/seller');
+        else router.push('/buyer');
+      } else {
+        setSuccess(true);
+      }
     }
     setLoading(false);
   };
