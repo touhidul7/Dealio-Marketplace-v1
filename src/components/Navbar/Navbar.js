@@ -47,7 +47,7 @@ export default function Navbar() {
     if (userRole === 'admin') return '/admin';
     if (userRole === 'advisor') return '/advisor';
     if (userRole === 'seller') return '/seller';
-    if (userRole === 'broker') return '/seller';
+    if (userRole === 'broker') return '/broker';
     return '/buyer';
   };
 

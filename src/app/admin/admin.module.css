@@ -1,5 +1,5 @@
 .pageHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-8); gap: var(--space-4); flex-wrap: wrap; }
-.statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); }
+.statsGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8); }
 .grid { display: grid; grid-template-columns: 1fr; gap: var(--space-6); }
 .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--space-6); }
 .sectionHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); }

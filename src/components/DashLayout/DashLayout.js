@@ -32,6 +32,12 @@ export default function DashLayout({ children, role }) {
       { href: '/buyer/saved', label: 'Saved Listings', icon: '♥' },
       { href: '/buyer/inquiries', label: 'My Inquiries', icon: '📬' },
     ],
+    broker: [
+      { href: '/broker', label: 'Dashboard', icon: '📊' },
+      { href: '/broker/listings', label: 'Client Listings', icon: '📋' },
+      { href: '/seller/listings/new', label: 'New Listing', icon: '➕' },
+      { href: '/broker/inquiries', label: 'Inquiries', icon: '📬' },
+    ],
     admin: [
       { href: '/admin', label: 'Overview', icon: '📊' },
       { href: '/admin/listings', label: 'All Listings', icon: '📋' },
@@ -48,7 +54,7 @@ export default function DashLayout({ children, role }) {
   };
 
   const items = navItems[role] || [];
-  const roleLabels = { seller: 'Seller Portal', buyer: 'Buyer Portal', admin: 'Admin Console', advisor: 'Advisor Portal' };
+  const roleLabels = { seller: 'Seller Portal', buyer: 'Buyer Portal', admin: 'Admin Console', advisor: 'Advisor Portal', broker: 'Broker Portal' };
 
   const handleLogout = async () => {
     try {

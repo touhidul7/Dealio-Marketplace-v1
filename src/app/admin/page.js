@@ -6,7 +6,7 @@ import { formatCurrency, timeAgo, LISTING_STATUSES } from '@/lib/constants';
 import styles from './admin.module.css';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ users: 0, listings: 0, activeListings: 0, inquiries: 0 });
+  const [stats, setStats] = useState({ users: 0, listings: 0, activeListings: 0, inquiries: 0, revenue: 0, serviceRequests: 0 });
   const [pendingListings, setPendingListings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   const [error, setError] = useState('');
@@ -30,6 +30,8 @@ export default function AdminDashboard() {
           { count: listingsCount, error: lCountErr },
           { count: activeListingsCount, error: aCountErr },
           { count: inquiriesCount, error: iCountErr },
+          { count: serviceRequestsCount, error: srCountErr },
+          { data: purchases, error: pErr },
           { data: pending, error: pendingErr },
           { data: users, error: usersErr }
         ] = await Promise.all([
@@ -37,18 +39,24 @@ export default function AdminDashboard() {
           supabase.from('listings').select('*', { count: 'exact', head: true }),
           supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
           supabase.from('inquiries').select('*', { count: 'exact', head: true }),
+          supabase.from('service_requests').select('*', { count: 'exact', head: true }),
+          supabase.from('package_purchases').select('amount').eq('payment_status', 'completed'),
           supabase.from('listings').select('*').eq('status', 'pending_review').order('created_at', { ascending: false }).limit(5),
           supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5)
         ]);
 
-        const firstErr = uCountErr || lCountErr || aCountErr || iCountErr || pendingErr || usersErr;
+        const firstErr = uCountErr || lCountErr || aCountErr || iCountErr || srCountErr || pErr || pendingErr || usersErr;
         if (firstErr) throw firstErr;
+
+        const totalRevenue = purchases ? purchases.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) : 0;
 
         setStats({
           users: usersCount || 0,
           listings: listingsCount || 0,
           activeListings: activeListingsCount || 0,
-          inquiries: inquiriesCount || 0
+          inquiries: inquiriesCount || 0,
+          serviceRequests: serviceRequestsCount || 0,
+          revenue: totalRevenue
         });
         setPendingListings(pending || []);
         setRecentUsers(users || []);
@@ -89,20 +97,28 @@ export default function AdminDashboard() {
       {/* Stats */}
       <div className={styles.statsGrid}>
         <div className="stat-card">
-          <div className="stat-label">Total Users</div>
-          <div className="stat-value">{stats.users}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Listings</div>
-          <div className="stat-value">{stats.listings}</div>
+          <div className="stat-label">Total Revenue</div>
+          <div className="stat-value" style={{color: 'var(--accent)'}}>{formatCurrency(stats.revenue)}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Active Listings</div>
           <div className="stat-value">{stats.activeListings}</div>
         </div>
         <div className="stat-card">
+          <div className="stat-label">Service Requests</div>
+          <div className="stat-value">{stats.serviceRequests}</div>
+        </div>
+        <div className="stat-card">
           <div className="stat-label">Total Inquiries</div>
           <div className="stat-value">{stats.inquiries}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Total Listings</div>
+          <div className="stat-value">{stats.listings}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Total Users</div>
+          <div className="stat-value">{stats.users}</div>
         </div>
       </div>
 

@@ -46,6 +46,7 @@ export default function AdminUsersPage() {
                       <select className="form-select" style={{padding:'4px 8px',fontSize:12,height:'auto'}} value={u.role} onChange={(e) => updateRole(u.id, e.target.value)}>
                         <option value="buyer">Buyer</option>
                         <option value="seller">Seller</option>
+                        <option value="broker">Broker</option>
                         <option value="advisor">Advisor</option>
                         <option value="admin">Admin</option>
                       </select>
