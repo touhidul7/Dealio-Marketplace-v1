@@ -35,7 +35,7 @@ export default function DashLayout({ children, role }) {
     broker: [
       { href: '/broker', label: 'Dashboard', icon: '📊' },
       { href: '/broker/listings', label: 'Client Listings', icon: '📋' },
-      { href: '/seller/listings/new', label: 'New Listing', icon: '➕' },
+      { href: '/broker/listings/new', label: 'New Listing', icon: '➕' },
       { href: '/broker/inquiries', label: 'Inquiries', icon: '📬' },
     ],
     admin: [
