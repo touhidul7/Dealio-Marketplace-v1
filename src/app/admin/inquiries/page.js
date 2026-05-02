@@ -5,18 +5,26 @@ import { createClient } from '@/lib/supabase/client';
 import { timeAgo, INQUIRY_STATUSES } from '@/lib/constants';
 
 export default function AdminInquiriesPage() {
-  const [inquiries, setInquiries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const [advisors, setAdvisors] = useState([]);
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from('inquiries').select('*, listings(title)').order('created_at', { ascending: false });
+      const [{ data }, { data: advData }] = await Promise.all([
+        supabase.from('inquiries').select('*, listings(title), assigned_advisor:users!assigned_advisor_id(email)').order('created_at', { ascending: false }),
+        supabase.from('users').select('id, full_name, email').eq('role', 'advisor')
+      ]);
       setInquiries(data || []);
+      setAdvisors(advData || []);
       setLoading(false);
     };
     load();
   }, []);
+
+  const updateAdvisor = async (id, advisorId) => {
+    const assigned_advisor_id = advisorId || null;
+    await supabase.from('inquiries').update({ assigned_advisor_id }).eq('id', id);
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, assigned_advisor_id } : i));
+  };
 
   return (
     <div>
@@ -33,7 +41,7 @@ export default function AdminInquiriesPage() {
         ) : (
           <div className="table-wrapper">
             <table className="table">
-              <thead><tr><th>Buyer Info</th><th>Listing</th><th>Status</th><th>Flags</th><th>Time</th></tr></thead>
+              <thead><tr><th>Buyer Info</th><th>Listing</th><th>Status</th><th>Flags</th><th>Time</th><th>Advisor</th></tr></thead>
               <tbody>
                 {inquiries.map(inq => (
                   <tr key={inq.id}>
@@ -47,6 +55,14 @@ export default function AdminInquiriesPage() {
                       </div>
                     </td>
                     <td style={{fontSize:13,color:'var(--text-tertiary)'}}>{timeAgo(inq.created_at)}</td>
+                    <td>
+                      <select className="form-select" style={{padding:'4px 8px',fontSize:12,height:'auto'}} value={inq.assigned_advisor_id || ''} onChange={(e) => updateAdvisor(inq.id, e.target.value)}>
+                        <option value="">Unassigned</option>
+                        {advisors.map(a => (
+                          <option key={a.id} value={a.id}>{a.full_name || a.email}</option>
+                        ))}
+                      </select>
+                    </td>
                   </tr>
                 ))}
               </tbody>

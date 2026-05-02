@@ -6,6 +6,41 @@ import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo } from '@/lib/constants';
 import styles from './buyer.module.css';
 
+function computeMatch(listing, profile) {
+  let score = 0;
+  let reasons = [];
+
+  const industries = profile.industry_focus || [];
+  const listingIndustry = listing.industry || '';
+  if (industries.length === 0 || industries.some(ind => listingIndustry.toLowerCase().includes(ind.toLowerCase()) || ind.toLowerCase().includes(listingIndustry.toLowerCase()))) {
+    score += 40;
+    if (industries.length > 0 && listingIndustry) reasons.push(`${listingIndustry} industry`);
+  }
+
+  const locations = profile.geographic_focus || [];
+  const listingProvince = (listing.province_state || '').toLowerCase();
+  const listingCity = (listing.city || '').toLowerCase();
+  const locationMatches = locations.length === 0 || locations.some(loc => {
+    const l = loc.toLowerCase();
+    return listingProvince.includes(l) || l.includes(listingProvince) || listingCity.includes(l) || l.includes(listingCity);
+  });
+  if (locationMatches) {
+    score += 30;
+    if (locations.length > 0 && listingProvince) reasons.push(`${listing.province_state} location`);
+  }
+
+  const price = listing.asking_price || 0;
+  const minDeal = Number(profile.deal_size_min) || 0;
+  const maxDeal = Number(profile.deal_size_max) || 0;
+  const withinSize = (minDeal === 0 || price >= minDeal) && (maxDeal === 0 || price <= maxDeal);
+  if (withinSize) {
+    score += 30;
+    if (minDeal > 0 || maxDeal > 0) reasons.push('within deal size range');
+  }
+
+  return { score, reasons };
+}
+
 export default function BuyerDashboard() {
   const [profile, setProfile] = useState(null);
   const [saved, setSaved] = useState([]);
@@ -27,8 +62,18 @@ export default function BuyerDashboard() {
       setSaved((sv || []).filter(s => s.listings?.status === 'active'));
       setInquiries(inq || []);
       if (bp) {
-        const { data: m } = await supabase.from('matches').select('*, listings(id, title, industry, city, province_state, asking_price, featured_image_url)').eq('buyer_profile_id', bp.id).order('total_score', { ascending: false }).limit(6);
-        setMatches(m || []);
+        const { data: listingsData } = await supabase.from('listings').select('id, title, industry, city, province_state, asking_price, featured_image_url').eq('status', 'active');
+        if (listingsData) {
+          const scored = listingsData
+            .map(l => {
+              const match = computeMatch(l, bp);
+              return { listings: l, total_score: match.score, reasons: match.reasons };
+            })
+            .filter(m => m.total_score > 0)
+            .sort((a, b) => b.total_score - a.total_score)
+            .slice(0, 6);
+          setMatches(scored);
+        }
       }
       setLoading(false);
     };

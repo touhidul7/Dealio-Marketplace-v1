@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { formatDate } from '@/lib/constants';
 
 const STATUS_OPTIONS = ['new', 'assigned', 'in_progress', 'complete', 'canceled'];
@@ -13,83 +14,70 @@ const STATUS_STYLES = {
   canceled:    { bg: '#FEF2F2', color: '#B91C1C' },
 };
 
-export default function AdminServicesPage() {
+export default function AdvisorServicesPage() {
   const [requests, setRequests] = useState([]);
-  const [advisors, setAdvisors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const supabase = createClient();
 
   const fetchRequests = async () => {
-    const [{ data, error }, { data: advData }] = await Promise.all([
-      supabase
+    if (!user) return;
+    const { data, error } = await supabase
       .from('service_requests')
       .select(`
         *,
-        client:users!service_requests_user_id_fkey ( full_name, email ),
+        client:users!service_requests_user_id_fkey ( full_name, email, phone ),
         listings ( title )
       `)
-      .order('created_at', { ascending: false }),
-      supabase.from('users').select('id, full_name, email').eq('role', 'advisor')
-    ]);
+      .eq('assigned_to_user_id', user.id)
+      .order('created_at', { ascending: false });
       
-    if (error) {
-      console.error('Fetch Service Requests Error:', error);
-    }
-    
+    if (error) console.error(error);
     if (data) setRequests(data);
-    if (advData) setAdvisors(advData);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [user]);
 
   const updateStatus = async (id, newStatus) => {
-    const { error } = await supabase
-      .from('service_requests')
-      .update({ status: newStatus })
-      .eq('id', id);
-      
+    const { error } = await supabase.from('service_requests').update({ status: newStatus }).eq('id', id);
     if (!error) {
-      fetchRequests(); // Refresh the list
-    } else {
-      alert('Failed to update status');
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
     }
   };
 
-  const updateAdvisor = async (id, advisorId) => {
-    const assigned_to_user_id = advisorId || null;
-    await supabase.from('service_requests').update({ assigned_to_user_id }).eq('id', id);
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, assigned_to_user_id } : r));
+  const updateNotes = async (id, notes) => {
+    const { error } = await supabase.from('service_requests').update({ notes }).eq('id', id);
+    if (!error) {
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, notes } : r));
+    }
   };
 
   return (
     <div>
-      <div style={{ marginBottom: 'var(--space-6)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 className="page-title">Service Requests</h1>
-          <p className="page-subtitle">Manage add-on services requested by sellers</p>
-        </div>
+      <div style={{ marginBottom: 'var(--space-6)' }}>
+        <h1 className="page-title">Assigned Service Requests</h1>
+        <p className="page-subtitle">Manage and update progress for seller service requests</p>
       </div>
 
       <div className="card">
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>
         ) : requests.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>No service requests found.</div>
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>No service requests assigned to you.</div>
         ) : (
           <div className="table-responsive">
             <table className="table">
               <thead>
                 <tr>
                   <th>DATE</th>
-                  <th>SELLER</th>
+                  <th>CLIENT</th>
                   <th>SERVICE TYPE</th>
                   <th>LISTING</th>
-                  <th>NOTES</th>
                   <th>STATUS</th>
-                  <th>ADVISOR</th>
+                  <th>NOTES</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,15 +91,13 @@ export default function AdminServicesPage() {
                       <td>
                         <div style={{ fontWeight: 500 }}>{req.client?.full_name || 'Unknown User'}</div>
                         <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{req.client?.email}</div>
+                        {req.client?.phone && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{req.client.phone}</div>}
                       </td>
                       <td style={{ fontWeight: 600, fontSize: 13, textTransform: 'capitalize' }}>
                         {req.request_type.replace(/_/g, ' ')}
                       </td>
                       <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13 }}>
                         {req.listings?.title || '-'}
-                      </td>
-                      <td style={{ maxWidth: 250, fontSize: 12, color: 'var(--text-secondary)' }}>
-                        {req.notes || '-'}
                       </td>
                       <td>
                         <select 
@@ -136,17 +122,13 @@ export default function AdminServicesPage() {
                           ))}
                         </select>
                       </td>
-                      <td>
-                        <select 
-                          value={req.assigned_to_user_id || ''}
-                          onChange={(e) => updateAdvisor(req.id, e.target.value)}
-                          style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12 }}
-                        >
-                          <option value="">Unassigned</option>
-                          {advisors.map(a => (
-                            <option key={a.id} value={a.id}>{a.full_name || a.email}</option>
-                          ))}
-                        </select>
+                      <td style={{ maxWidth: 250 }}>
+                        <textarea 
+                          defaultValue={req.notes || ''}
+                          onBlur={(e) => updateNotes(req.id, e.target.value)}
+                          placeholder="Add internal notes..."
+                          style={{ width: '100%', minHeight: '60px', padding: '8px', fontSize: '12px', border: '1px solid var(--border)', borderRadius: '6px' }}
+                        />
                       </td>
                     </tr>
                   )
