@@ -49,7 +49,6 @@ export default function DashLayout({ children, role }) {
     advisor: [
       { href: '/advisor', label: 'Dashboard', icon: '📊' },
       { href: '/advisor/inquiries', label: 'Assigned Leads', icon: '📬' },
-      { href: '/advisor/matches', label: 'Matches', icon: '🎯' },
     ],
   };
 
