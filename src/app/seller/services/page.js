@@ -184,7 +184,7 @@ export default function SellerServicesPage() {
 
       {/* Active Requests */}
       {!loading && requests.length > 0 && (
-        <div className="card" style={{ marginBottom: 32 }}>
+        <div className="card" style={{ marginBottom: 32, padding: 'var(--space-6)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>My Service Requests</h2>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{requests.length} request{requests.length !== 1 ? 's' : ''}</span>
