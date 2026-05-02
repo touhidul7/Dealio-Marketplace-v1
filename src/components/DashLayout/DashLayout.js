@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -11,21 +11,30 @@ export default function DashLayout({ children, role }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Redirect if not logged in
-  if (!loading && !user) {
-    router.push('/login');
-    return null;
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else {
+        const userRole = user.user_metadata?.role || 'buyer';
+        if (userRole !== 'admin' && userRole !== role) {
+          router.push(`/${userRole}`);
+        }
+      }
+    }
+  }, [user, loading, role, router]);
+
+  if (loading || !user) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
   }
 
-  // Prevent unauthorized access to other portals
-  if (!loading && user) {
-    const userRole = user.user_metadata?.role || 'buyer';
-    // Allow admins to see everything, otherwise strictly enforce role
-    if (userRole !== 'admin' && userRole !== role) {
-      router.push(`/${userRole}`);
-      return null;
-    }
+  const userRole = user.user_metadata?.role || 'buyer';
+  const isAuthorized = userRole === 'admin' || userRole === role;
+
+  if (!isAuthorized) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
   }
+
 
   const navItems = {
     seller: [
