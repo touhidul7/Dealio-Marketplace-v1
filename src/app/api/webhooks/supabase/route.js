@@ -34,7 +34,7 @@ export async function POST(req) {
 
       if (listing && listing.users?.email && resendKey) {
         const { error: resendErr } = await resend.emails.send({
-          from: 'onboarding@resend.dev', // Note: This domain must be verified in Resend!
+          from: 'Dealio Marketplace <notifications@brittosoft.site>',
           to: listing.users.email,
           subject: `New Inquiry for: ${listing.title}`,
           html: `
@@ -75,9 +75,9 @@ export async function POST(req) {
             canceled: 'Canceled'
           };
           const prettyStatus = statusLabels[record.status] || record.status;
-
+          
           const { error: resendErr } = await resend.emails.send({
-            from: 'onboarding@resend.dev', // Note: This domain must be verified in Resend!
+            from: 'Dealio Advisory <advisory@brittosoft.site>',
             to: user.email,
             subject: `Service Request Update: ${prettyStatus}`,
             html: `
