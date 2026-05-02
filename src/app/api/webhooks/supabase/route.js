@@ -33,8 +33,8 @@ export async function POST(req) {
         .single();
 
       if (listing && listing.users?.email && resendKey) {
-        await resend.emails.send({
-          from: 'Dealio Marketplace <notifications@dealiomarketplace.com>',
+        const { error: resendErr } = await resend.emails.send({
+          from: 'Dealio Marketplace <notifications@dealiomarketplace.com>', // Note: This domain must be verified in Resend!
           to: listing.users.email,
           subject: `New Inquiry for: ${listing.title}`,
           html: `
@@ -48,6 +48,10 @@ export async function POST(req) {
             <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/seller/inquiries" style="padding: 10px 16px; background: #0F52BA; color: white; text-decoration: none; border-radius: 6px;">View Inquiry in Dashboard</a></p>
           `,
         });
+        
+        if (resendErr) {
+          console.error('Resend Error (Inquiry):', resendErr);
+        }
       }
     }
 
@@ -72,8 +76,8 @@ export async function POST(req) {
           };
           const prettyStatus = statusLabels[record.status] || record.status;
           
-          await resend.emails.send({
-            from: 'Dealio Advisory <advisory@dealiomarketplace.com>',
+          const { error: resendErr } = await resend.emails.send({
+            from: 'Dealio Advisory <advisory@dealiomarketplace.com>', // Note: This domain must be verified in Resend!
             to: user.email,
             subject: `Service Request Update: ${prettyStatus}`,
             html: `
@@ -84,6 +88,10 @@ export async function POST(req) {
               <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/seller/services" style="padding: 10px 16px; background: #0F52BA; color: white; text-decoration: none; border-radius: 6px;">View Request Status</a></p>
             `,
           });
+          
+          if (resendErr) {
+            console.error('Resend Error (Service):', resendErr);
+          }
         }
       }
     }
