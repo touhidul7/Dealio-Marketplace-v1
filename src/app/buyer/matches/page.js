@@ -69,7 +69,7 @@ export default function BuyerMatchesPage() {
       // Fetch all active listings
       const { data: listings } = await supabase
         .from('listings')
-        .select('id, title, industry, city, province_state, asking_price, featured_image_url, revenue, ebitda')
+        .select('id, title, industry, city, province_state, asking_price, featured_image_url, annual_revenue, ebitda')
         .eq('status', 'active');
 
       if (!listings || listings.length === 0) {
