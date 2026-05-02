@@ -11,10 +11,20 @@ export default function DashLayout({ children, role }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Redirect if not logged in (after loading completes)
+  // Redirect if not logged in
   if (!loading && !user) {
     router.push('/login');
     return null;
+  }
+
+  // Prevent unauthorized access to other portals
+  if (!loading && user) {
+    const userRole = user.user_metadata?.role || 'buyer';
+    // Allow admins to see everything, otherwise strictly enforce role
+    if (userRole !== 'admin' && userRole !== role) {
+      router.push(`/${userRole}`);
+      return null;
+    }
   }
 
   const navItems = {
