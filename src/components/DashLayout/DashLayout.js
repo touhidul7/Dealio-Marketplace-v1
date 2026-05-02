@@ -43,6 +43,7 @@ export default function DashLayout({ children, role }) {
       { href: '/seller/listings/new', label: 'New Listing', icon: '➕' },
       { href: '/seller/inquiries', label: 'Inquiries', icon: '📬' },
       { href: '/seller/services', label: 'Services', icon: '⭐' },
+      { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     buyer: [
       { href: '/buyer', label: 'Dashboard', icon: '📊' },
@@ -50,12 +51,14 @@ export default function DashLayout({ children, role }) {
       { href: '/buyer/matches', label: 'Matches', icon: '🎯' },
       { href: '/buyer/saved', label: 'Saved Listings', icon: '♥' },
       { href: '/buyer/inquiries', label: 'My Inquiries', icon: '📬' },
+      { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     broker: [
       { href: '/broker', label: 'Dashboard', icon: '📊' },
       { href: '/broker/listings', label: 'Client Listings', icon: '📋' },
       { href: '/broker/listings/new', label: 'New Listing', icon: '➕' },
       { href: '/broker/inquiries', label: 'Inquiries', icon: '📬' },
+      { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     admin: [
       { href: '/admin', label: 'Overview', icon: '📊' },
@@ -68,6 +71,7 @@ export default function DashLayout({ children, role }) {
     advisor: [
       { href: '/advisor', label: 'Dashboard', icon: '📊' },
       { href: '/advisor/inquiries', label: 'Assigned Leads', icon: '📬' },
+      { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
   };
 

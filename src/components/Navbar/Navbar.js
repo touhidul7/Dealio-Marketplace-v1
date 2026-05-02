@@ -100,6 +100,7 @@ export default function Navbar() {
                   <Link href={getDashboardLink()} className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Dashboard</Link>
                   {userRole === 'seller' && <Link href="/seller/listings/new" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Create Listing</Link>}
                   {userRole === 'buyer' && <Link href="/buyer/profile" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Buyer Profile</Link>}
+                  <Link href="/settings" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Settings</Link>
                   <div className={styles.dropdownDivider}></div>
                   <button className={styles.dropdownItem} onClick={handleLogout}>Sign Out</button>
                 </div>

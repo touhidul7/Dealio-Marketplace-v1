@@ -52,7 +52,7 @@ export default function BrokerDashboardPage() {
           <h1 className="page-title">Broker Dashboard</h1>
           <p className="page-subtitle">Manage your client listings and their inquiries.</p>
         </div>
-        <Link href="/seller/listings/new" className="btn btn-primary">
+        <Link href="/broker/listings/new" className="btn btn-primary">
           + New Client Listing
         </Link>
       </div>
