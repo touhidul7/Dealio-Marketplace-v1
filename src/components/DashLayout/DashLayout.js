@@ -6,7 +6,7 @@ import { useAuth } from '@/components/AuthProvider';
 import styles from './DashLayout.module.css';
 
 export default function DashLayout({ children, role }) {
-  const { user, loading } = useAuth();
+  const { user, userRole, loading } = useAuth();
   const [sideOpen, setSideOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -15,21 +15,17 @@ export default function DashLayout({ children, role }) {
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else {
-        const userRole = user.user_metadata?.role || 'buyer';
-        if (userRole !== 'admin' && userRole !== role) {
-          router.push(`/${userRole}`);
-        }
+      } else if (userRole && userRole !== 'admin' && userRole !== role) {
+        router.push(`/${userRole}`);
       }
     }
-  }, [user, loading, role, router]);
+  }, [user, userRole, loading, role, router]);
 
   if (loading || !user) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
   }
 
-  const userRole = user.user_metadata?.role || 'buyer';
-  const isAuthorized = userRole === 'admin' || userRole === role;
+  const isAuthorized = !userRole || userRole === 'admin' || userRole === role;
 
   if (!isAuthorized) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
