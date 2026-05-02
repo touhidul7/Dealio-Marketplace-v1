@@ -110,35 +110,7 @@ function CheckoutContent() {
           {loading ? 'Processing...' : `Pay $${pkg.price} with Stripe`}
         </button>
 
-        {/* Dev Mode Simulation Button */}
-        <button 
-          className="btn btn-secondary btn-sm" 
-          style={{ width: '100%', marginTop: 12, borderStyle: 'dashed' }} 
-          onClick={async () => {
-            setLoading(true);
-            try {
-              const res = await fetch('/api/dev/simulate-purchase', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ packageId: pkgId, userId: user.id }),
-              });
-              const data = await res.json();
-              if (data.success) {
-                router.push('/seller/services?success=true');
-              } else {
-                throw new Error(data.error);
-              }
-            } catch (err) {
-              setError('Simulation failed: ' + err.message);
-            } finally {
-              setLoading(false);
-            }
-          }}
-          disabled={loading}
-        >
-          🛠️ Simulate Success (Dev Mode)
-        </button>
-        
+
         <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-tertiary)', marginTop: 16 }}>
           By clicking pay, you agree to our terms and conditions. Your subscription will start immediately.
         </p>
