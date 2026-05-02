@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, formatDate, LISTING_STATUSES } from '@/lib/constants';
 import styles from './detail.module.css';
 
@@ -16,18 +17,16 @@ export default function ListingDetailPage() {
   const [inquirySubmitted, setInquirySubmitted] = useState(false);
   const [inquiryLoading, setInquiryLoading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser();
-      if (u) {
-        setUser(u);
-        const { data: profile } = await supabase.from('users').select('full_name').eq('id', u.id).single();
-        setInquiryForm(f => ({ ...f, name: profile?.full_name || '', email: u.email || '' }));
-        const { data: sv } = await supabase.from('saved_listings').select('id').eq('user_id', u.id).eq('listing_id', id).single();
+      if (user) {
+        const { data: profile } = await supabase.from('users').select('full_name').eq('id', user.id).single();
+        setInquiryForm(f => ({ ...f, name: profile?.full_name || '', email: user.email || '' }));
+        const { data: sv } = await supabase.from('saved_listings').select('id').eq('user_id', user.id).eq('listing_id', id).single();
         if (sv) setSaved(true);
       }
       const { data } = await supabase.from('listings').select('*').eq('id', id).single();
@@ -37,7 +36,7 @@ export default function ListingDetailPage() {
       setLoading(false);
     };
     load();
-  }, [id]);
+  }, [id, user]);
 
   const handleSave = async () => {
     if (!user) { router.push('/login'); return; }

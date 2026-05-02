@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { INDUSTRIES, PROVINCES, COUNTRIES, PACKAGES } from '@/lib/constants';
 import styles from './wizard.module.css';
 
@@ -31,6 +32,7 @@ function NewListingWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
+  const { user } = useAuth();
 
   // Read package from URL
   useEffect(() => {
@@ -54,8 +56,7 @@ function NewListingWizard() {
   const handleSubmit = async () => {
     setSaving(true); setError('');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError('Not authenticated'); return; }
+      if (!user) { setError('Not authenticated. Please log in.'); setSaving(false); return; }
 
       let imageUrl = null;
       if (featuredImage) { imageUrl = await uploadImage(featuredImage, user.id); }

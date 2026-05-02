@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { PACKAGES } from '@/lib/constants';
 
 function CheckoutContent() {
@@ -9,59 +9,32 @@ function CheckoutContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [user, setUser] = useState(null);
-  const supabase = createClient();
+  const { user, loading: authLoading } = useAuth();
 
   const pkgId = searchParams.get('package');
   const pkg = PACKAGES.find(p => p.id === pkgId);
 
   useEffect(() => {
-    let isMounted = true;
-    let finished = false;
-    const timeout = setTimeout(() => {
-      if (isMounted && !finished) {
-        setError('Authentication check is taking too long. Please check your connection or environment variables on Vercel.');
-        setLoading(false);
-      }
-    }, 8000);
+    if (authLoading) return;
 
-    const checkUser = async () => {
-      try {
-        const { data: { user: foundUser }, error: authErr } = await supabase.auth.getUser();
-        if (!isMounted) return;
-        
-        if (authErr || !foundUser) {
-          router.push(`/signup?role=seller&package=${pkgId || 'pro'}`);
-        } else {
-          finished = true;
-          setUser(foundUser);
-          setLoading(false);
-          clearTimeout(timeout);
-        }
-      } catch (err) {
-        console.error('[Checkout] Auth check crash:', err);
-        if (isMounted) {
-          setError('Could not connect to the database.');
-          setLoading(false);
-        }
-      }
-    };
-    checkUser();
-    return () => { isMounted = false; clearTimeout(timeout); };
-  }, [supabase, router, pkgId]);
+    if (!user) {
+      router.push(`/signup?role=seller&package=${pkgId || 'pro'}`);
+    } else {
+      setLoading(false);
+    }
+  }, [user, authLoading, router, pkgId]);
 
   const handleCheckout = async () => {
     setLoading(true);
     setError('');
     try {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) throw new Error('Your session has expired. Please log in again.');
+      if (!user) throw new Error('Your session has expired. Please log in again.');
       if (!pkg || pkg.price === 0) throw new Error('Invalid package');
 
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packageId: pkgId, userId: currentUser.id }),
+        body: JSON.stringify({ packageId: pkgId, userId: user.id }),
       });
 
       const { url, error: stripeError } = await res.json();

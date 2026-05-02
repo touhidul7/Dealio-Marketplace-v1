@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { INDUSTRIES, PROVINCES, COUNTRIES, PACKAGES } from '@/lib/constants';
 import styles from '../../new/wizard.module.css';
 
@@ -22,12 +23,13 @@ function EditListingWizard({ params }) {
   const [done, setDone] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    const loadListing = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/login'); return; }
+    if (authLoading) return;
+    if (!user) { router.push('/login'); return; }
 
+    const loadListing = async () => {
       const { data, error } = await supabase
         .from('listings')
         .select('*')
@@ -52,7 +54,7 @@ function EditListingWizard({ params }) {
       });
     };
     loadListing();
-  }, [listingId]);
+  }, [listingId, user, authLoading]);
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 
@@ -68,8 +70,7 @@ function EditListingWizard({ params }) {
   const handleSubmit = async () => {
     setSaving(true); setError('');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError('Not authenticated'); return; }
+      if (!user) { setError('Not authenticated. Please log in.'); setSaving(false); return; }
 
       let imageUrl = form.featured_image_url;
       if (featuredImage) { imageUrl = await uploadImage(featuredImage, user.id); }

@@ -1,22 +1,23 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 
 function UpgradeHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState('');
-  const supabase = createClient();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading) return;
+
     const startCheckout = async () => {
       try {
+        if (!user) throw new Error('Not authenticated');
+
         const packageId = searchParams.get('package');
         const listingId = searchParams.get('listingId');
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Not authenticated');
 
         if (!packageId || !listingId) throw new Error('Missing parameters');
 
@@ -41,7 +42,7 @@ function UpgradeHandler() {
     };
 
     startCheckout();
-  }, [searchParams, supabase]);
+  }, [searchParams, user, authLoading]);
 
   if (error) {
     return (
