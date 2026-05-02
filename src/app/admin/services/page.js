@@ -23,7 +23,7 @@ export default function AdminServicesPage() {
       .from('service_requests')
       .select(`
         *,
-        users ( full_name, email ),
+        client:users!service_requests_user_id_fkey ( full_name, email ),
         listings ( title )
       `)
       .order('created_at', { ascending: false });
@@ -89,8 +89,8 @@ export default function AdminServicesPage() {
                         {formatDate(req.created_at)}
                       </td>
                       <td>
-                        <div style={{ fontWeight: 500 }}>{req.users?.full_name || 'Unknown User'}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{req.users?.email}</div>
+                        <div style={{ fontWeight: 500 }}>{req.client?.full_name || 'Unknown User'}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{req.client?.email}</div>
                       </td>
                       <td style={{ fontWeight: 600, fontSize: 13, textTransform: 'capitalize' }}>
                         {req.request_type.replace(/_/g, ' ')}
