@@ -19,7 +19,7 @@ export default function AdminServicesPage() {
   const supabase = createClient();
 
   const fetchRequests = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('service_requests')
       .select(`
         *,
@@ -27,6 +27,11 @@ export default function AdminServicesPage() {
         listings ( title )
       `)
       .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Fetch Service Requests Error:', error);
+    }
+    
     if (data) setRequests(data);
     setLoading(false);
   };
