@@ -10,27 +10,34 @@ function computeMatch(listing, profile) {
   let reasons = [];
 
   // Industry match (40 points)
-  const industries = profile.preferred_industries || [];
-  if (industries.length === 0 || industries.includes(listing.industry)) {
+  const industries = profile.industry_focus || [];
+  const listingIndustry = listing.industry || '';
+  if (industries.length === 0 || industries.some(ind => listingIndustry.toLowerCase().includes(ind.toLowerCase()) || ind.toLowerCase().includes(listingIndustry.toLowerCase()))) {
     score += 40;
-    if (industries.includes(listing.industry)) reasons.push(`${listing.industry} industry`);
+    if (industries.length > 0 && listingIndustry) reasons.push(`${listingIndustry} industry`);
   }
 
-  // Location match (30 points)
-  const locations = profile.preferred_locations || [];
-  const listingLocation = listing.province_state || '';
-  if (locations.length === 0 || locations.some(l => listingLocation.toLowerCase().includes(l.toLowerCase()) || l.toLowerCase().includes(listingLocation.toLowerCase()))) {
+  // Location match (30 points) — match against province_state OR city
+  const locations = profile.geographic_focus || [];
+  const listingProvince = (listing.province_state || '').toLowerCase();
+  const listingCity = (listing.city || '').toLowerCase();
+  const locationMatches = locations.length === 0 || locations.some(loc => {
+    const l = loc.toLowerCase();
+    return listingProvince.includes(l) || l.includes(listingProvince) || listingCity.includes(l) || l.includes(listingCity);
+  });
+  if (locationMatches) {
     score += 30;
-    if (locations.length > 0) reasons.push(`${listingLocation} location`);
+    if (locations.length > 0 && listingProvince) reasons.push(`${listing.province_state} location`);
   }
 
   // Deal size match (30 points)
   const price = listing.asking_price || 0;
-  const minDeal = profile.min_deal_size || 0;
-  const maxDeal = profile.max_deal_size || Infinity;
-  if (price >= minDeal && (maxDeal === 0 || price <= maxDeal)) {
+  const minDeal = Number(profile.deal_size_min) || 0;
+  const maxDeal = Number(profile.deal_size_max) || 0;
+  const withinSize = (minDeal === 0 || price >= minDeal) && (maxDeal === 0 || price <= maxDeal);
+  if (withinSize) {
     score += 30;
-    if (minDeal > 0 || maxDeal > 0) reasons.push('within deal size');
+    if (minDeal > 0 || maxDeal > 0) reasons.push('within deal size range');
   }
 
   return { score, reasons };
