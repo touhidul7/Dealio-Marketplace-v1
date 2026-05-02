@@ -22,17 +22,17 @@ export default function Footer() {
           </div>
           <div className={styles.col}>
             <h4 className={styles.colTitle}>Services</h4>
-            <Link href="/#" className={styles.link}>Advisory Services</Link>
-            <Link href="/#" className={styles.link}>Business Valuations</Link>
-            <Link href="/#" className={styles.link}>Buyer Outreach</Link>
-            <Link href="/#" className={styles.link}>Deal Support</Link>
+            <Link href="/services#advisory" className={styles.link}>Advisory Services</Link>
+            <Link href="/services#valuations" className={styles.link}>Business Valuations</Link>
+            <Link href="/services#outreach" className={styles.link}>Buyer Outreach</Link>
+            <Link href="/services#support" className={styles.link}>Deal Support</Link>
           </div>
           <div className={styles.col}>
             <h4 className={styles.colTitle}>Company</h4>
-            <Link href="/#" className={styles.link}>About Dealio</Link>
-            <Link href="/#" className={styles.link}>Contact Us</Link>
-            <Link href="/#" className={styles.link}>Privacy Policy</Link>
-            <Link href="/#" className={styles.link}>Terms of Service</Link>
+            <Link href="/about" className={styles.link}>About Dealio</Link>
+            <Link href="/contact" className={styles.link}>Contact Us</Link>
+            <Link href="/privacy" className={styles.link}>Privacy Policy</Link>
+            <Link href="/terms" className={styles.link}>Terms of Service</Link>
           </div>
         </div>
         <div className={styles.bottom}>

@@ -72,7 +72,9 @@ export default function DashLayout({ children, role }) {
     ],
     advisor: [
       { href: '/advisor', label: 'Dashboard', icon: '📊' },
+      { href: '/advisor/profile', label: 'My Profile', icon: '👤' },
       { href: '/advisor/inquiries', label: 'Assigned Leads', icon: '📬' },
+      { href: '/advisor/matches', label: 'Client Matches', icon: '🎯' },
       { href: '/advisor/services', label: 'Service Requests', icon: '⭐' },
       { href: '/advisor/saved', label: 'Saved Listings', icon: '♥' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
