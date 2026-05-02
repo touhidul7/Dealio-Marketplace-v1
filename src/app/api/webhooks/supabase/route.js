@@ -55,6 +55,53 @@ export async function POST(req) {
       }
     }
 
+    // 1.5. Inquiry Status Update (Notifies the Buyer)
+    if (table === 'inquiries' && type === 'UPDATE') {
+      if (old_record && old_record.inquiry_status !== record.inquiry_status) {
+        let buyerEmail = record.anonymous_email;
+        let buyerName = record.anonymous_name || 'there';
+
+        // If they are a registered user, fetch their real email
+        if (record.buyer_user_id) {
+          const { data: buyerUser } = await supabase
+            .from('users')
+            .select('email, full_name')
+            .eq('id', record.buyer_user_id)
+            .single();
+            
+          if (buyerUser && buyerUser.email) {
+            buyerEmail = buyerUser.email;
+            buyerName = buyerUser.full_name || buyerName;
+          }
+        }
+
+        const { data: listing } = await supabase
+          .from('listings')
+          .select('title')
+          .eq('id', record.listing_id)
+          .single();
+
+        if (buyerEmail && resendKey) {
+          const { error: resendErr } = await resend.emails.send({
+            from: 'Dealio Marketplace <notifications@brittosoft.site>',
+            to: buyerEmail,
+            subject: `Update on your inquiry: ${listing?.title || 'Listing'}`,
+            html: `
+              <h2>Inquiry Status Update</h2>
+              <p>Hi ${buyerName},</p>
+              <p>The seller has updated the status of your inquiry for <strong>${listing?.title || 'the listing'}</strong>.</p>
+              <p>New Status: <strong style="color: #0F52BA; text-transform: capitalize;">${record.inquiry_status}</strong></p>
+              <p>If the seller needs more information, they will reach out to you directly.</p>
+            `,
+          });
+
+          if (resendErr) {
+            console.error('Resend Error (Inquiry Update):', resendErr);
+          }
+        }
+      }
+    }
+
     // 2. Service Request Status Update
     if (table === 'service_requests' && type === 'UPDATE') {
       // Only email if status actually changed
