@@ -242,7 +242,7 @@ export default function AdvisorMatchesPage() {
                               Buyer Match for "{m.listing.title}"
                             </div>
                             <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 4px 0' }}>
-                              {m.item.users?.full_name || m.item.users?.email}
+                              {m.item.users?.full_name || m.item.users?.email || 'Anonymous Buyer'}
                             </h3>
                             <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>
                               {m.item.company_name && <span>{m.item.company_name} • </span>}
