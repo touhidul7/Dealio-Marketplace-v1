@@ -1,7 +1,19 @@
+'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import styles from './Footer.module.css';
 
 export default function Footer() {
+  const pathname = usePathname();
+  
+  const isDashboardRoute = pathname?.startsWith('/seller') || 
+                           pathname?.startsWith('/buyer') || 
+                           pathname?.startsWith('/admin') || 
+                           pathname?.startsWith('/advisor') || 
+                           pathname?.startsWith('/broker') ||
+                           pathname?.startsWith('/settings');
+
+  if (isDashboardRoute) return null;
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>

@@ -52,6 +52,15 @@ export default function Navbar() {
   };
 
   const isHome = pathname === '/';
+  
+  const isDashboardRoute = pathname?.startsWith('/seller') || 
+                           pathname?.startsWith('/buyer') || 
+                           pathname?.startsWith('/admin') || 
+                           pathname?.startsWith('/advisor') || 
+                           pathname?.startsWith('/broker') ||
+                           pathname?.startsWith('/settings');
+
+  if (isDashboardRoute) return null;
 
   return (
     <header className={`${styles.header} ${scrolled ? styles.scrolled : ''} ${isHome && !scrolled ? styles.transparent : ''}`}>

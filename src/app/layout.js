@@ -2,6 +2,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar/Navbar';
 import Footer from '@/components/Footer/Footer';
 import AuthProvider from '@/components/AuthProvider';
+import MainLayoutWrapper from '@/components/MainLayoutWrapper';
 
 export const metadata = {
   title: 'Dealio Marketplace – Buy & Sell Businesses',
@@ -15,9 +16,9 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <Navbar />
-          <main style={{ minHeight: '100vh', paddingTop: '64px' }}>
+          <MainLayoutWrapper>
             {children}
-          </main>
+          </MainLayoutWrapper>
           <Footer />
         </AuthProvider>
       </body>
