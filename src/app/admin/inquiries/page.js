@@ -5,7 +5,10 @@ import { createClient } from '@/lib/supabase/client';
 import { timeAgo, INQUIRY_STATUSES } from '@/lib/constants';
 
 export default function AdminInquiriesPage() {
+  const [inquiries, setInquiries] = useState([]);
   const [advisors, setAdvisors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const load = async () => {

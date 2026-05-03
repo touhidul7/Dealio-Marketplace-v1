@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
+import DashLayout from '@/components/DashLayout/DashLayout';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,7 +57,13 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
-  if (loading) return <div style={{ padding: 80, textAlign: 'center' }}>Loading settings...</div>;
+  if (authLoading || loading) {
+    return (
+      <DashLayout role={userRole || 'buyer'}>
+        <div style={{ padding: 80, textAlign: 'center' }}>Loading settings...</div>
+      </DashLayout>
+    );
+  }
 
   const inputStyle = {
     width: '100%',
@@ -74,49 +81,51 @@ export default function SettingsPage() {
   const labelStyle = { display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' };
 
   return (
-    <div style={{ maxWidth: 580, margin: '0 auto', padding: '40px 24px' }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 className="page-title">Account Settings</h1>
-        <p className="page-subtitle">Update your personal and business details</p>
-      </div>
+    <DashLayout role={userRole}>
+      <div style={{ maxWidth: 580, margin: '0 auto', padding: '40px 24px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <h1 className="page-title">Account Settings</h1>
+          <p className="page-subtitle">Update your personal and business details</p>
+        </div>
 
-      <div className="card" style={{ padding: 'var(--space-6)' }}>
-        <form onSubmit={handleSubmit}>
-          <div style={groupStyle}>
-            <label style={labelStyle}>Email Address</label>
-            <input type="text" style={{ ...inputStyle, backgroundColor: 'var(--gray-50)', color: 'var(--text-tertiary)' }} value={user?.email || ''} disabled />
-            <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>Email cannot be changed.</p>
-          </div>
-
-          <div style={groupStyle}>
-            <label style={labelStyle}>Full Name</label>
-            <input type="text" style={inputStyle} value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} required />
-          </div>
-
-          <div style={groupStyle}>
-            <label style={labelStyle}>Phone Number</label>
-            <input type="text" style={inputStyle} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+1 (555) 000-0000" />
-          </div>
-
-          <div style={groupStyle}>
-            <label style={labelStyle}>Company / Brokerage</label>
-            <input type="text" style={inputStyle} value={formData.company_name} onChange={e => setFormData({...formData, company_name: e.target.value})} placeholder="Your Company Name" />
-          </div>
-
-          {message && (
-            <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 20, fontSize: 14, backgroundColor: message.includes('success') ? '#f0fdf4' : '#fef2f2', color: message.includes('success') ? '#15803d' : '#b91c1c', border: `1px solid ${message.includes('success') ? '#bbf7d0' : '#fecaca'}` }}>
-              {message}
+        <div className="card" style={{ padding: 'var(--space-6)' }}>
+          <form onSubmit={handleSubmit}>
+            <div style={groupStyle}>
+              <label style={labelStyle}>Email Address</label>
+              <input type="text" style={{ ...inputStyle, backgroundColor: 'var(--gray-50)', color: 'var(--text-tertiary)' }} value={user?.email || ''} disabled />
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>Email cannot be changed.</p>
             </div>
-          )}
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 32 }}>
-            <button type="button" onClick={() => window.history.back()} className="btn btn-secondary">Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
+            <div style={groupStyle}>
+              <label style={labelStyle}>Full Name</label>
+              <input type="text" style={inputStyle} value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} required />
+            </div>
+
+            <div style={groupStyle}>
+              <label style={labelStyle}>Phone Number</label>
+              <input type="text" style={inputStyle} value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+1 (555) 000-0000" />
+            </div>
+
+            <div style={groupStyle}>
+              <label style={labelStyle}>Company / Brokerage</label>
+              <input type="text" style={inputStyle} value={formData.company_name} onChange={e => setFormData({...formData, company_name: e.target.value})} placeholder="Your Company Name" />
+            </div>
+
+            {message && (
+              <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 20, fontSize: 14, backgroundColor: message.includes('success') ? '#f0fdf4' : '#fef2f2', color: message.includes('success') ? '#15803d' : '#b91c1c', border: `1px solid ${message.includes('success') ? '#bbf7d0' : '#fecaca'}` }}>
+                {message}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 32 }}>
+              <button type="button" onClick={() => window.history.back()} className="btn btn-secondary">Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </DashLayout>
   );
 }
