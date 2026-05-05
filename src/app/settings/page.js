@@ -20,39 +20,76 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
-      const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
-      if (data) {
+      const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).single();
+      
+      let companyName = '';
+      if (userRole === 'buyer') {
+        const { data } = await supabase.from('buyer_profiles').select('company_name').eq('user_id', user.id).single();
+        if (data) companyName = data.company_name;
+      } else if (userRole === 'seller') {
+        const { data } = await supabase.from('seller_profiles').select('business_name').eq('user_id', user.id).single();
+        if (data) companyName = data.business_name;
+      } else if (userRole === 'broker') {
+        const { data } = await supabase.from('broker_profiles').select('brokerage_name').eq('user_id', user.id).single();
+        if (data) companyName = data.brokerage_name;
+      }
+
+      if (userData) {
         setFormData({
-          full_name: data.full_name || '',
-          company_name: data.company_name || '',
-          phone: data.phone || '',
+          full_name: userData.full_name || '',
+          company_name: companyName || '',
+          phone: userData.phone || '',
         });
       }
       setLoading(false);
     };
     fetchProfile();
-  }, [user, supabase]);
+  }, [user, userRole, supabase]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setMessage('');
     
-    const { error } = await supabase
+    const { error: userError } = await supabase
       .from('users')
       .update({
         full_name: formData.full_name,
-        company_name: formData.company_name,
         phone: formData.phone,
         updated_at: new Date().toISOString()
       })
       .eq('id', user.id);
 
-    if (!error) {
+    let profileError = null;
+    if (!userError) {
+      if (userRole === 'buyer') {
+        const { data, error } = await supabase.from('buyer_profiles').update({ company_name: formData.company_name, updated_at: new Date().toISOString() }).eq('user_id', user.id).select();
+        if (!error && (!data || data.length === 0)) {
+          const { error: insertErr } = await supabase.from('buyer_profiles').insert({ user_id: user.id, company_name: formData.company_name });
+          profileError = insertErr;
+        } else { profileError = error; }
+      } else if (userRole === 'seller') {
+        const { data, error } = await supabase.from('seller_profiles').update({ business_name: formData.company_name, updated_at: new Date().toISOString() }).eq('user_id', user.id).select();
+        if (!error && (!data || data.length === 0)) {
+          const { error: insertErr } = await supabase.from('seller_profiles').insert({ user_id: user.id, business_name: formData.company_name });
+          profileError = insertErr;
+        } else { profileError = error; }
+      } else if (userRole === 'broker') {
+        const { data, error } = await supabase.from('broker_profiles').update({ brokerage_name: formData.company_name, updated_at: new Date().toISOString() }).eq('user_id', user.id).select();
+        if (!error && (!data || data.length === 0)) {
+          const { error: insertErr } = await supabase.from('broker_profiles').insert({ user_id: user.id, brokerage_name: formData.company_name });
+          profileError = insertErr;
+        } else { profileError = error; }
+      }
+    }
+
+    if (!userError && !profileError) {
       await supabase.auth.updateUser({ data: { full_name: formData.full_name } });
       setMessage('Profile updated successfully!');
     } else {
-      setMessage('Failed to update profile. Please try again.');
+      const err = userError || profileError;
+      console.error("Profile update error:", err);
+      setMessage(`Failed to update profile: ${err?.message || 'Please try again.'}`);
     }
     setSaving(false);
   };
