@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { formatCurrency } from '@/lib/constants';
 
 export async function generateMetadata({ params }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   // Fetch the listing data
   const { data: listing } = await supabase
