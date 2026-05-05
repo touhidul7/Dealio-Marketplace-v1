@@ -52,7 +52,7 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <div className={styles.authContainer}>
+    <div className={styles.authPage}>
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
           <h2>Update Password</h2>
