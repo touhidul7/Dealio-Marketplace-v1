@@ -15,26 +15,27 @@ export async function POST(req) {
 
     if (error) throw error;
 
-    // 2. Sync to GoHighLevel (if configured)
-    const ghlWebhookUrl = process.env.GHL_WEBHOOK_URL;
-    if (ghlWebhookUrl) {
+    // 2. Sync to GoHighLevel
+    if (process.env.GHL_API_KEY) {
       try {
-        await fetch(ghlWebhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            first_name: body.anonymous_name?.split(' ')[0] || '',
-            last_name: body.anonymous_name?.split(' ').slice(1).join(' ') || '',
-            email: body.anonymous_email,
-            phone: body.anonymous_phone,
-            customData: {
-              source: 'dealio_marketplace',
-              listing_id: body.listing_id,
-              message: body.message,
-              wants_support: body.wants_acquisition_support,
-              needs_financing: body.needs_financing
-            }
-          })
+        const { createGHLContact } = require('@/lib/ghl');
+        
+        const firstName = body.anonymous_name?.split(' ')[0] || '';
+        const lastName = body.anonymous_name?.split(' ').slice(1).join(' ') || '';
+
+        await createGHLContact({
+          firstName,
+          lastName,
+          email: body.anonymous_email,
+          phone: body.anonymous_phone,
+          source: body.source_type === 'contact_form' ? 'Dealio Contact Form' : 'Dealio Inquiry',
+          tags: body.source_type === 'contact_form' ? ['contact-form'] : ['inquiry', 'buyer'],
+          customData: {
+            'Listing ID': body.listing_id,
+            'Message': body.message,
+            'Wants Acquisition Support': body.wants_acquisition_support ? 'Yes' : 'No',
+            'Needs Financing': body.needs_financing ? 'Yes' : 'No'
+          }
         });
       } catch (ghlErr) {
         console.error('Failed to sync to GHL:', ghlErr);
