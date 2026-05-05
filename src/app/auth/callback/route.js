@@ -8,9 +8,15 @@ export async function GET(request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // If a specific next page is requested (e.g. /update-password from reset flow), go there
+      // Check if this is a password recovery flow via AMR (Authentication Methods Reference)
+      const isRecovery = data?.session?.amr?.some(entry => entry.method === 'recovery');
+      if (isRecovery || next === '/update-password') {
+        return NextResponse.redirect(`${origin}/update-password`);
+      }
+
+      // If a specific next page was requested, go there
       if (next !== '/') {
         return NextResponse.redirect(`${origin}${next}`);
       }
