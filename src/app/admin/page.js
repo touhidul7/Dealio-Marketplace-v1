@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { formatCurrency, timeAgo, LISTING_STATUSES } from '@/lib/constants';
+import { formatCurrency, timeAgo } from '@/lib/constants';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import styles from './admin.module.css';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ users: 0, listings: 0, activeListings: 0, inquiries: 0, revenue: 0, serviceRequests: 0 });
+  const [chartData, setChartData] = useState([]);
   const [pendingListings, setPendingListings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   const [error, setError] = useState('');
@@ -17,26 +19,26 @@ export default function AdminDashboard() {
     let finished = false;
     const timeout = setTimeout(() => {
       if (!finished) {
-        setError('Admin data is taking too long to load. This is often caused by recursive RLS policies in Supabase. Please run the fix_rls_recursion.sql migration in your Supabase SQL editor.');
+        setError('Admin data is taking too long to load.');
         setLoading(false);
       }
-    }, 12000); // Increased to 12s
+    }, 12000);
 
     const load = async () => {
       try {
         setLoading(true);
         const [
-          { count: usersCount, error: uCountErr },
-          { count: listingsCount, error: lCountErr },
-          { count: activeListingsCount, error: aCountErr },
-          { count: inquiriesCount, error: iCountErr },
-          { count: serviceRequestsCount, error: srCountErr },
-          { data: purchases, error: pErr },
-          { data: pending, error: pendingErr },
-          { data: users, error: usersErr }
+          { count: usersCount, data: allUsers, error: uErr },
+          { count: listingsCount, data: allListings, error: lErr },
+          { count: activeListingsCount },
+          { count: inquiriesCount },
+          { count: serviceRequestsCount },
+          { data: purchases },
+          { data: pending },
+          { data: users }
         ] = await Promise.all([
-          supabase.from('users').select('*', { count: 'exact', head: true }),
-          supabase.from('listings').select('*', { count: 'exact', head: true }),
+          supabase.from('users').select('created_at', { count: 'exact' }),
+          supabase.from('listings').select('created_at', { count: 'exact' }),
           supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
           supabase.from('inquiries').select('*', { count: 'exact', head: true }),
           supabase.from('service_requests').select('*', { count: 'exact', head: true }),
@@ -45,8 +47,7 @@ export default function AdminDashboard() {
           supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5)
         ]);
 
-        const firstErr = uCountErr || lCountErr || aCountErr || iCountErr || srCountErr || pErr || pendingErr || usersErr;
-        if (firstErr) throw firstErr;
+        if (uErr || lErr) throw uErr || lErr;
 
         const totalRevenue = purchases ? purchases.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) : 0;
 
@@ -58,6 +59,29 @@ export default function AdminDashboard() {
           serviceRequests: serviceRequestsCount || 0,
           revenue: totalRevenue
         });
+        
+        // Process Chart Data (Last 6 months)
+        const monthCounts = {};
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const label = d.toLocaleString('default', { month: 'short' });
+          monthCounts[label] = { name: label, Users: 0, Listings: 0 };
+        }
+        
+        allUsers?.forEach(u => {
+          const date = new Date(u.created_at);
+          const label = date.toLocaleString('default', { month: 'short' });
+          if (monthCounts[label]) monthCounts[label].Users += 1;
+        });
+
+        allListings?.forEach(l => {
+          const date = new Date(l.created_at);
+          const label = date.toLocaleString('default', { month: 'short' });
+          if (monthCounts[label]) monthCounts[label].Listings += 1;
+        });
+
+        setChartData(Object.values(monthCounts));
         setPendingListings(pending || []);
         setRecentUsers(users || []);
         finished = true;
@@ -70,7 +94,7 @@ export default function AdminDashboard() {
       }
     };
     load();
-  }, []);
+  }, [supabase]);
 
   const updateListingStatus = async (id, status) => {
     await supabase.from('listings').update({ status }).eq('id', id);
@@ -119,6 +143,36 @@ export default function AdminDashboard() {
         <div className="stat-card">
           <div className="stat-label">Total Users</div>
           <div className="stat-value">{stats.users}</div>
+        </div>
+      </div>
+
+      {/* Analytics Chart */}
+      <div className={styles.section} style={{ background: 'var(--surface)', padding: 'var(--space-6)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)' }}>
+        <h2 className={styles.sectionTitle} style={{ marginBottom: 24 }}>Growth Analytics (6 Months)</h2>
+        <div style={{ width: '100%', height: 350 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorListings" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-tertiary)', fontSize: 12}} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-tertiary)', fontSize: 12}} />
+              <Tooltip 
+                contentStyle={{ borderRadius: 8, border: 'none', boxShadow: 'var(--shadow-md)', backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
+                itemStyle={{ fontWeight: 600 }}
+              />
+              <Area type="monotone" dataKey="Users" stroke="var(--primary)" fillOpacity={1} fill="url(#colorUsers)" strokeWidth={3} />
+              <Area type="monotone" dataKey="Listings" stroke="var(--accent)" fillOpacity={1} fill="url(#colorListings)" strokeWidth={3} />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

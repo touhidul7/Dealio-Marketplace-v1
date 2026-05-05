@@ -54,7 +54,10 @@ function LoginForm() {
             <input type="email" className="form-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
           </div>
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <label className="form-label">Password</label>
+              <Link href="/forgot-password" className={styles.authLink} style={{ fontSize: '13px' }}>Forgot password?</Link>
+            </div>
             <input type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
           </div>
           <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>

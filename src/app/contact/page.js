@@ -5,16 +5,30 @@ import Link from 'next/link';
 export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', subject: 'I want to buy a business', message: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    // Simulate network request
-    setTimeout(() => {
-      setSubmitting(false);
+    
+    try {
+      await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anonymous_name: `${formData.firstName} ${formData.lastName}`.trim(),
+          anonymous_email: formData.email,
+          message: `${formData.subject}\n\n${formData.message}`,
+          source_type: 'contact_form'
+        })
+      });
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 800);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -77,22 +91,22 @@ export default function ContactPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label" style={{ fontWeight: 600 }}>First Name</label>
-                    <input type="text" className="form-input" style={{ background: 'var(--gray-50)' }} required placeholder="Jane" />
+                    <input type="text" className="form-input" style={{ background: 'var(--gray-50)' }} required placeholder="Jane" value={formData.firstName} onChange={e => setFormData(f => ({...f, firstName: e.target.value}))} />
                   </div>
                   <div className="form-group" style={{ marginBottom: 0 }}>
                     <label className="form-label" style={{ fontWeight: 600 }}>Last Name</label>
-                    <input type="text" className="form-input" style={{ background: 'var(--gray-50)' }} required placeholder="Doe" />
+                    <input type="text" className="form-input" style={{ background: 'var(--gray-50)' }} required placeholder="Doe" value={formData.lastName} onChange={e => setFormData(f => ({...f, lastName: e.target.value}))} />
                   </div>
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 20 }}>
                   <label className="form-label" style={{ fontWeight: 600 }}>Email Address</label>
-                  <input type="email" className="form-input" style={{ background: 'var(--gray-50)' }} required placeholder="jane@example.com" />
+                  <input type="email" className="form-input" style={{ background: 'var(--gray-50)' }} required placeholder="jane@example.com" value={formData.email} onChange={e => setFormData(f => ({...f, email: e.target.value}))} />
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 20 }}>
                   <label className="form-label" style={{ fontWeight: 600 }}>How can we help?</label>
-                  <select className="form-select" style={{ background: 'var(--gray-50)' }}>
+                  <select className="form-select" style={{ background: 'var(--gray-50)' }} value={formData.subject} onChange={e => setFormData(f => ({...f, subject: e.target.value}))}>
                     <option>I want to buy a business</option>
                     <option>I want to sell my business</option>
                     <option>I need a business valuation</option>
@@ -103,7 +117,7 @@ export default function ContactPage() {
 
                 <div className="form-group" style={{ marginBottom: 30 }}>
                   <label className="form-label" style={{ fontWeight: 600 }}>Message</label>
-                  <textarea className="form-textarea" rows="5" style={{ background: 'var(--gray-50)', resize: 'vertical' }} required placeholder="Tell us more about your needs..."></textarea>
+                  <textarea className="form-textarea" rows="5" style={{ background: 'var(--gray-50)', resize: 'vertical' }} required placeholder="Tell us more about your needs..." value={formData.message} onChange={e => setFormData(f => ({...f, message: e.target.value}))}></textarea>
                 </div>
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700 }} disabled={submitting}>
