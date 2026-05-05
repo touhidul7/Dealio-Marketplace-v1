@@ -16,19 +16,24 @@ function ListingsContent() {
 
   const [error, setError] = useState('');
 
+  // Read URL params and trigger a fetch whenever they change
   useEffect(() => {
-    setFilters(f => ({
-      ...f,
-      q: searchParams.get('q') || '',
-      industry: searchParams.get('industry') || '',
-    }));
+    const q = searchParams.get('q') || '';
+    const industry = searchParams.get('industry') || '';
+    setFilters(f => {
+      const updated = { ...f, q, industry };
+      // Fetch immediately with the new values (can't rely on state update timing)
+      fetchListingsWithFilters(updated);
+      return updated;
+    });
   }, [searchParams]);
 
   useEffect(() => {
     fetchListings();
   }, [filters.sortBy]);
 
-  const fetchListings = async () => {
+  // Core fetch function — accepts explicit filter values to avoid stale closure issues
+  const fetchListingsWithFilters = async (f) => {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       setError('Supabase credentials are missing. Please check your Vercel environment variables.');
       setLoading(false);
@@ -37,34 +42,32 @@ function ListingsContent() {
 
     setLoading(true);
     setError('');
-    
+
     let finished = false;
     const timeout = setTimeout(() => {
       if (!finished) {
-        setError('Database connection timeout. This often happens if the Supabase project is paused or there is a network issue between Vercel and Supabase.');
+        setError('Database connection timeout.');
         setLoading(false);
       }
-    }, 12000); // Increased to 12s for Vercel cold starts
+    }, 12000);
 
     try {
-      console.log('Fetching listings from Supabase...');
       let query = supabase.from('listings').select('*').eq('status', 'active');
-      
-      if (filters.industry) query = query.eq('industry', filters.industry);
-      if (filters.province) query = query.eq('province_state', filters.province);
-      if (filters.priceMin) query = query.gte('asking_price', Number(filters.priceMin));
-      if (filters.priceMax) query = query.lte('asking_price', Number(filters.priceMax));
-      if (filters.q) query = query.or(`title.ilike.%${filters.q}%,short_summary.ilike.%${filters.q}%,industry.ilike.%${filters.q}%`);
-      
-      if (filters.sortBy === 'newest') query = query.order('created_at', { ascending: false });
-      else if (filters.sortBy === 'price_low') query = query.order('asking_price', { ascending: true });
-      else if (filters.sortBy === 'price_high') query = query.order('asking_price', { ascending: false });
-      
+
+      if (f.industry) query = query.eq('industry', f.industry);
+      if (f.province) query = query.eq('province_state', f.province);
+      if (f.priceMin) query = query.gte('asking_price', Number(f.priceMin));
+      if (f.priceMax) query = query.lte('asking_price', Number(f.priceMax));
+      if (f.q) query = query.or(`title.ilike.%${f.q}%,short_summary.ilike.%${f.q}%,industry.ilike.%${f.q}%`);
+
+      if (f.sortBy === 'newest') query = query.order('created_at', { ascending: false });
+      else if (f.sortBy === 'price_low') query = query.order('asking_price', { ascending: true });
+      else if (f.sortBy === 'price_high') query = query.order('asking_price', { ascending: false });
+
       const { data, error: fetchError } = await query.limit(50);
-      
+
       finished = true;
       clearTimeout(timeout);
-
       if (fetchError) throw fetchError;
       setListings(data || []);
     } catch (err) {
@@ -74,6 +77,9 @@ function ListingsContent() {
       if (finished) setLoading(false);
     }
   };
+
+  // Wrapper that uses current state (for button clicks)
+  const fetchListings = () => fetchListingsWithFilters(filters);
 
   const handleSearch = (e) => { e.preventDefault(); fetchListings(); };
 
