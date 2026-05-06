@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { INDUSTRIES, PROVINCES, COUNTRIES, PACKAGES } from '@/lib/constants';
@@ -8,7 +9,7 @@ import styles from './wizard.module.css';
 
 const STEPS = [
   'Business Basics', 'Financial Info', 'Business Details',
-  'Uploads', 'Lead Routing', 'Package', 'Review'
+  'Uploads', 'Lead Routing', 'Review'
 ];
 
 const EMPTY = {
@@ -18,7 +19,7 @@ const EMPTY = {
   ebitda: '', cash_flow: '', inventory_included: false, real_estate_included: false,
   reason_for_sale: '', highlights: '', ideal_buyer: '', growth_opportunities: '',
   owner_role: '', employees_count: '', year_established: '',
-  inquiry_routing_type: 'direct_to_seller', package_type: 'basic',
+  inquiry_routing_type: 'direct_to_seller',
 };
 
 function NewListingWizard() {
@@ -29,18 +30,34 @@ function NewListingWizard() {
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
   const [createdId, setCreatedId] = useState(null);
+  const [userPlan, setUserPlan] = useState('basic');
+  const [listingCount, setListingCount] = useState(0);
+  const [planLoading, setPlanLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
   const { user } = useAuth();
 
-  // Read package from URL
+  // Fetch user plan and current listing count
   useEffect(() => {
-    const pkg = searchParams?.get('package');
-    if (pkg && ['basic', 'pro', 'premium'].includes(pkg)) {
-      setForm(f => ({ ...f, package_type: pkg }));
-    }
-  }, [searchParams]);
+    if (!user) return;
+    const load = async () => {
+      const [{ data: profile }, { data: listings }] = await Promise.all([
+        supabase.from('users').select('package_type, package_expiry').eq('id', user.id).single(),
+        supabase.from('listings').select('id').eq('owner_user_id', user.id),
+      ]);
+      
+      // Check if plan is expired
+      const isExpired = profile?.package_expiry && new Date(profile.package_expiry) < new Date();
+      setUserPlan(isExpired ? 'basic' : (profile?.package_type || 'basic'));
+      setListingCount(listings?.length || 0);
+      setPlanLoading(false);
+    };
+    load();
+  }, [user]);
+
+  const currentPkg = PACKAGES.find(p => p.id === userPlan) || PACKAGES[0];
+  const canCreateListing = listingCount < currentPkg.listingLimit;
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 
@@ -57,6 +74,11 @@ function NewListingWizard() {
     setSaving(true); setError('');
     try {
       if (!user) { setError('Not authenticated. Please log in.'); setSaving(false); return; }
+      if (!canCreateListing) {
+        setError(`Your ${currentPkg.name} plan allows ${currentPkg.listingLimit} listing(s). Please upgrade to create more.`);
+        setSaving(false);
+        return;
+      }
 
       let imageUrl = null;
       if (featuredImage) { imageUrl = await uploadImage(featuredImage, user.id); }
@@ -67,7 +89,6 @@ function NewListingWizard() {
         if (sanitizedForm[field] === '') {
           sanitizedForm[field] = null;
         } else if (typeof sanitizedForm[field] === 'string') {
-          // Also ensure they are actual numbers if they aren't empty
           const val = parseFloat(sanitizedForm[field]);
           if (!isNaN(val)) sanitizedForm[field] = val;
         }
@@ -80,23 +101,16 @@ function NewListingWizard() {
         lead_owner_type: form.inquiry_routing_type === 'dealio_inbox' ? 'dealio' : 'seller',
         status: 'pending_review',
         featured_image_url: imageUrl,
+        package_type: userPlan,
+        is_featured: currentPkg.isFeatured,
+        is_verified: currentPkg.isVerified,
       };
 
       const { data, error: submitError } = await supabase.from('listings').insert(payload).select().single();
       if (submitError) throw submitError;
 
-      if (form.package_type !== 'basic') {
-        const res = await fetch('/api/stripe/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ packageId: form.package_type, listingId: data.id, userId: user.id }),
-        });
-        const { url } = await res.json();
-        if (url) window.location.href = url;
-      } else {
-        setCreatedId(data.id);
-        setDone(true);
-      }
+      setCreatedId(data.id);
+      setDone(true);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Something went wrong');
@@ -105,12 +119,41 @@ function NewListingWizard() {
     }
   };
 
+  if (planLoading) {
+    return (
+      <div className="container" style={{padding: '100px 0', textAlign: 'center'}}>
+        <div className="spinner"></div>
+        <p>Loading your plan details...</p>
+      </div>
+    );
+  }
+
+  // Show upgrade wall if listing limit reached
+  if (!canCreateListing) {
+    return (
+      <div className="container" style={{padding: '80px 0', textAlign: 'center', maxWidth: 600, margin: '0 auto'}}>
+        <div style={{fontSize: 64, marginBottom: 24}}>🔒</div>
+        <h1 style={{fontSize: 28, marginBottom: 12}}>Listing Limit Reached</h1>
+        <p style={{color: 'var(--text-secondary)', marginBottom: 8, fontSize: 16}}>
+          Your <strong style={{textTransform: 'capitalize'}}>{currentPkg.name}</strong> plan allows up to <strong>{currentPkg.listingLimit}</strong> listing{currentPkg.listingLimit > 1 ? 's' : ''}.
+        </p>
+        <p style={{color: 'var(--text-secondary)', marginBottom: 32, fontSize: 16}}>
+          You currently have <strong>{listingCount}</strong> listing{listingCount > 1 ? 's' : ''}. Upgrade your plan to create more.
+        </p>
+        <div style={{display: 'flex', gap: 12, justifyContent: 'center'}}>
+          <Link href="/pricing" className="btn btn-primary btn-lg">Upgrade Plan</Link>
+          <Link href="/seller/listings" className="btn btn-secondary btn-lg">My Listings</Link>
+        </div>
+      </div>
+    );
+  }
+
   if (done) {
     return (
       <div className="container" style={{padding: '100px 0', textAlign: 'center'}}>
         <div style={{fontSize: 64, marginBottom: 24}}>🎉</div>
         <h1 style={{fontSize: 32, marginBottom: 16}}>Listing Submitted!</h1>
-        <p style={{color: 'var(--text-secondary)', marginBottom: 32, maxWidth: 500, margin: '0 auto 32px'}}>Your listing has been sent to our team for review. You can manage it from your dashboard.</p>
+        <p style={{color: 'var(--text-secondary)', marginBottom: 32, maxWidth: 500, margin: '0 auto 32px'}}>Your listing has been sent to our team for review. It typically goes live within 24 hours.</p>
         <button className="btn btn-primary btn-lg" onClick={() => router.push('/seller/listings')}>Go to Dashboard</button>
       </div>
     );
@@ -123,7 +166,10 @@ function NewListingWizard() {
         <div className={styles.header}>
           <div className={styles.headerTop}>
             <h1 className={styles.title}>List Your Business</h1>
-            <span className={styles.stepBadge}>Step {step + 1} of {STEPS.length}</span>
+            <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+              <span className="badge badge-primary" style={{textTransform: 'capitalize'}}>{userPlan} Plan</span>
+              <span className={styles.stepBadge}>Step {step + 1} of {STEPS.length}</span>
+            </div>
           </div>
           <p className={styles.subtitle}>{STEPS[step]}</p>
           
@@ -220,30 +266,19 @@ function NewListingWizard() {
 
         {step === 5 && (
           <div className={styles.stepContent}>
-            <div className={styles.packageGrid}>
-              {PACKAGES.map(pkg => (
-                <div key={pkg.id} className={`${styles.packageCard} ${form.package_type === pkg.id ? styles.packageActive : ''}`} onClick={() => set('package_type', pkg.id)}>
-                  <div className={styles.packageHeader} style={{borderColor: pkg.color}}>
-                    <h3>{pkg.name}</h3>
-                    <div className={styles.packagePrice}>${pkg.price}</div>
-                  </div>
-                  <ul className={styles.packageFeatures}>
-                    {pkg.features.slice(0, 4).map((f, i) => <li key={i}>✓ {f}</li>)}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 6 && (
-          <div className={styles.stepContent}>
             <div className={styles.reviewGrid}>
               <div className={styles.reviewSection}><h3>Business</h3><dl>{[['Title', form.title],['Industry', form.industry],['Location', `${form.city}, ${form.province_state}`]].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd>{v}</dd></div>)}</dl></div>
               <div className={styles.reviewSection}><h3>Financials</h3><dl>{[['Asking Price', form.asking_price],['Revenue', form.annual_revenue],['EBIDTA', form.ebitda]].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd>${v}</dd></div>)}</dl></div>
-              <div className={styles.reviewSection}><h3>Settings</h3><dl>{[['Package', form.package_type],['Routing', form.inquiry_routing_type],['Featured Image', featuredImage ? featuredImage.name : 'None']].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd style={{textTransform:'capitalize'}}>{v}</dd></div>)}</dl></div>
+              <div className={styles.reviewSection}><h3>Settings</h3><dl>{[['Plan', userPlan],['Routing', form.inquiry_routing_type],['Featured Image', featuredImage ? featuredImage.name : 'None'],['Featured Badge', currentPkg.isFeatured ? '✅ Yes' : '❌ No'],['Verified Badge', currentPkg.isVerified ? '✅ Yes' : '❌ No']].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd style={{textTransform:'capitalize'}}>{v}</dd></div>)}</dl></div>
             </div>
             <p style={{color:'var(--text-secondary)',fontSize:14,marginTop:16}}>Your listing will be submitted for review. It typically goes live within 24 hours.</p>
+            {userPlan === 'basic' && (
+              <div style={{marginTop: 16, padding: 16, background: 'rgba(var(--primary-rgb), 0.05)', borderRadius: 12, border: '1px solid rgba(var(--primary-rgb), 0.15)'}}>
+                <p style={{fontSize: 14, color: 'var(--text-secondary)', margin: 0}}>
+                  💡 <strong>Want more visibility?</strong> <Link href="/pricing" style={{color: 'var(--primary)', textDecoration: 'underline'}}>Upgrade to Pro or Premium</Link> for priority placement, featured badges, and more listings.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -256,10 +291,8 @@ function NewListingWizard() {
             <button className="btn btn-accent btn-lg" onClick={handleSubmit} disabled={saving}>
               {saving ? (
                 <><span className="spinner"></span> Processing...</>
-              ) : form.package_type === 'basic' ? (
-                '🚀 Submit Listing'
               ) : (
-                `💳 Pay & Submit (${PACKAGES.find(p => p.id === form.package_type)?.price ? '$' + PACKAGES.find(p => p.id === form.package_type).price : 'Upgrade'})`
+                '🚀 Submit Listing'
               )}
             </button>
           )}

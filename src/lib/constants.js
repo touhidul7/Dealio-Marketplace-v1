@@ -28,21 +28,25 @@ export const PACKAGES = [
     id: 'basic', name: 'Basic', price: 0, period: 'Free',
     features: ['1 business listing', 'Basic listing page', 'Direct inquiries', 'Standard visibility'],
     color: 'var(--gray-600)',
+    listingLimit: 1, isFeatured: false, isVerified: false, prioritySort: 0, listingDays: 30,
   },
   {
     id: 'pro', name: 'Pro', price: 149, period: '/month',
-    features: ['Enhanced listing page', 'Priority placement', 'Inquiry screening', 'Performance stats', 'Email notifications'],
+    features: ['Up to 5 business listings', 'Enhanced listing page', 'Priority placement', 'Inquiry screening', 'Performance stats', 'Email notifications'],
     color: 'var(--primary)', popular: true,
+    listingLimit: 5, isFeatured: false, isVerified: true, prioritySort: 1, listingDays: 90,
   },
   {
     id: 'premium', name: 'Premium', price: 399, period: '/month',
-    features: ['Featured listing badge', 'Top search placement', 'Buyer outreach', 'Dedicated support', 'Advanced analytics', 'CIM creation'],
+    features: ['Unlimited listings', 'Featured listing badge', 'Top search placement', 'Buyer outreach', 'Dedicated support', 'Advanced analytics', 'CIM creation', 'Verified seller badge'],
     color: 'var(--accent)',
+    listingLimit: Infinity, isFeatured: true, isVerified: true, prioritySort: 2, listingDays: 180,
   },
   {
     id: 'full_advisory', name: 'Full Advisory', price: null, period: 'Custom',
     features: ['Full Dealio representation', 'Buyer sourcing', 'Deal management', 'Negotiation support', 'Due diligence coordination', 'Closing support'],
     color: 'var(--cta-dark)',
+    listingLimit: Infinity, isFeatured: true, isVerified: true, prioritySort: 3, listingDays: 365,
   },
 ];
 

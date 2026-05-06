@@ -3,35 +3,44 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES } from '@/lib/constants';
+import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES, PACKAGES } from '@/lib/constants';
 import styles from './seller.module.css';
 
 export default function SellerDashboard() {
   const [listings, setListings] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userPlan, setUserPlan] = useState('basic');
+  const [planExpiry, setPlanExpiry] = useState(null);
   const { user } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [{ data: l }, { data: i }] = await Promise.all([
+      const [{ data: l }, { data: i }, { data: profile }] = await Promise.all([
         supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('inquiries').select('*, listings(title)').in('listing_id',
           (await supabase.from('listings').select('id').eq('owner_user_id', user.id)).data?.map(x => x.id) || []
         ).order('created_at', { ascending: false }).limit(10),
+        supabase.from('users').select('package_type, package_expiry').eq('id', user.id).single(),
       ]);
       setListings(l || []);
       setInquiries(i || []);
+      
+      const isExpired = profile?.package_expiry && new Date(profile.package_expiry) < new Date();
+      setUserPlan(isExpired ? 'basic' : (profile?.package_type || 'basic'));
+      setPlanExpiry(profile?.package_expiry);
       setLoading(false);
     };
     load();
   }, [user]);
 
+  const currentPkg = PACKAGES.find(p => p.id === userPlan) || PACKAGES[0];
   const active = listings.filter(l => l.status === 'active').length;
   const draft = listings.filter(l => l.status === 'draft').length;
   const newInquiries = inquiries.filter(i => i.inquiry_status === 'new').length;
+  const canCreate = listings.length < currentPkg.listingLimit;
 
   if (loading) return (
     <div>
@@ -48,18 +57,26 @@ export default function SellerDashboard() {
           <h1 className="page-title">Seller Dashboard</h1>
           <p className="page-subtitle">Manage your listings and buyer inquiries</p>
         </div>
-        <Link href="/seller/listings/new" className="btn btn-primary">➕ Create New Listing</Link>
+        <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
+          <span className="badge badge-primary" style={{textTransform: 'capitalize', fontSize: 13, padding: '6px 14px'}}>{userPlan} Plan</span>
+          {canCreate ? (
+            <Link href="/seller/listings/new" className="btn btn-primary">➕ Create New Listing</Link>
+          ) : (
+            <Link href="/pricing" className="btn btn-accent">⬆️ Upgrade Plan</Link>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
       <div className={styles.statsGrid}>
         <div className="stat-card">
-          <div className="stat-label">Active Listings</div>
-          <div className="stat-value">{active}</div>
+          <div className="stat-label">Your Plan</div>
+          <div className="stat-value" style={{textTransform: 'capitalize', fontSize: 22}}>{userPlan}</div>
+          <div style={{fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4}}>{listings.length} / {currentPkg.listingLimit === Infinity ? '∞' : currentPkg.listingLimit} listings used</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Draft Listings</div>
-          <div className="stat-value">{draft}</div>
+          <div className="stat-label">Active Listings</div>
+          <div className="stat-value">{active}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">New Inquiries</div>
@@ -99,17 +116,6 @@ export default function SellerDashboard() {
                     <td>
                       <div style={{display:'flex',gap:8}}>
                         <Link href={`/seller/listings/${l.id}/edit`} className="btn btn-sm btn-secondary">Edit</Link>
-                        {l.package_type === 'basic' && (
-                          <button 
-                            className="btn btn-sm btn-accent" 
-                            onClick={async () => {
-                              // Direct to pricing to pick a plan
-                              window.location.href = `/pricing?upgrade=${l.id}`;
-                            }}
-                          >
-                            Upgrade
-                          </button>
-                        )}
                         <Link href={`/listings/${l.id}`} className="btn btn-sm btn-ghost">View</Link>
                       </div>
                     </td>

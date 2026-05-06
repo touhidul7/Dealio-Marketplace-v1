@@ -69,7 +69,20 @@ function ListingsContent() {
       finished = true;
       clearTimeout(timeout);
       if (fetchError) throw fetchError;
-      setListings(data || []);
+      
+      // Sort: Featured/Premium listings appear first, then apply user's sort
+      const sorted = (data || []).sort((a, b) => {
+        // Featured listings always first
+        if (a.is_featured && !b.is_featured) return -1;
+        if (!a.is_featured && b.is_featured) return 1;
+        // Then by package tier
+        const tierOrder = { full_advisory: 3, premium: 2, pro: 1, basic: 0 };
+        const tierDiff = (tierOrder[b.package_type] || 0) - (tierOrder[a.package_type] || 0);
+        if (tierDiff !== 0) return tierDiff;
+        return 0; // Let Supabase order handle the rest
+      });
+      
+      setListings(sorted);
     } catch (err) {
       console.error('Listings fetch failed:', err);
       setError(`Failed to load listings: ${err.message || 'Unknown error'}`);
@@ -181,6 +194,7 @@ function ListingsContent() {
                     </div>
                   )}
                   {listing.is_featured && <span className={styles.featured}>⭐ Featured</span>}
+                  {listing.is_verified && <span className={styles.confBadge} style={{background: 'var(--accent)', color: 'white', left: listing.is_featured ? 'auto' : 12, right: listing.is_featured ? 12 : 'auto'}}>✓ Verified</span>}
                   {listing.confidentiality_mode === 'confidential' && <span className={styles.confBadge}>🔒 Confidential</span>}
                 </div>
                 <div className={styles.cardBody}>
