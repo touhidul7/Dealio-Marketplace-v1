@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createGHLContact } from '@/lib/ghl';
 
 export async function POST(req) {
   try {
@@ -22,8 +23,6 @@ export async function POST(req) {
     // 2. Sync to GoHighLevel
     if (process.env.GHL_API_KEY) {
       try {
-        const { createGHLContact } = require('@/lib/ghl');
-        
         const firstName = body.anonymous_name?.split(' ')[0] || '';
         const lastName = body.anonymous_name?.split(' ').slice(1).join(' ') || '';
 
@@ -40,6 +39,8 @@ export async function POST(req) {
         if (body.source_type === 'contact_form') ghlSource = 'Dealio Contact Form';
         else if (isOtherOpps) ghlSource = 'Other Opportunities';
 
+        console.log('Syncing to GHL:', { firstName, lastName, email: body.anonymous_email, source: ghlSource, tags: contactTags });
+
         await createGHLContact({
           firstName,
           lastName,
@@ -48,17 +49,21 @@ export async function POST(req) {
           source: ghlSource,
           tags: contactTags,
           customData: {
-            'Listing ID': body.listing_id,
+            'Listing ID': body.listing_id || 'N/A',
             'Dealio ID': body.dealio_id || 'N/A',
             'Message': body.message,
             'Wants Acquisition Support': body.wants_acquisition_support ? 'Yes' : 'No',
             'Needs Financing': body.needs_financing ? 'Yes' : 'No'
           }
         });
-        } catch (ghlErr) {
-          console.error('Failed to sync to GHL:', ghlErr);
-          // Don't fail the request if GHL sync fails
-        }
+
+        console.log('GHL sync successful');
+      } catch (ghlErr) {
+        console.error('Failed to sync to GHL:', ghlErr);
+        // Don't fail the request if GHL sync fails
+      }
+    } else {
+      console.warn('GHL_API_KEY not set, skipping GHL sync');
     }
 
     return NextResponse.json({ success: true, inquiry });
