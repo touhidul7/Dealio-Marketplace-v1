@@ -52,7 +52,7 @@ export default function AdvisorInquiriesPage() {
                   <strong className={styles.itemName}>{inq.anonymous_name || 'Registered Buyer'}</strong>
                   <span className={styles.itemTime}>{timeAgo(inq.created_at)}</span>
                 </div>
-                <div className={styles.itemListing}>{inq.listings?.title}</div>
+                <div className={styles.itemListing}>{inq.listings?.title || inq.message?.match(/^\[(.+?)\]/)?.[1] || 'Other Opportunity'}</div>
                 <div className={styles.itemBottom}>
                   <span className={`badge badge-${INQUIRY_STATUSES[inq.inquiry_status]?.color || 'gray'}`}>{INQUIRY_STATUSES[inq.inquiry_status]?.label}</span>
                   {inq.inquiry_status === 'new' && <span className={styles.newDot}></span>}
@@ -77,7 +77,7 @@ export default function AdvisorInquiriesPage() {
                     <h4>Contact Information</h4>
                     <p><strong>Email:</strong> {selected.anonymous_email || '—'}</p>
                     <p><strong>Phone:</strong> {selected.anonymous_phone || '—'}</p>
-                    <p><strong>Listing:</strong> {selected.listings?.title}</p>
+                    <p><strong>Listing:</strong> {selected.listings?.title || selected.message?.match(/^\[(.+?)\]/)?.[1] || 'Other Opportunity'}</p>
                   </div>
                   {(selected.wants_acquisition_support || selected.needs_financing) && (
                     <div className={styles.detailFlags}>

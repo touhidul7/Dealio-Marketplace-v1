@@ -76,7 +76,8 @@ export default function Navbar() {
         </Link>
 
         <nav className={`${styles.nav} ${menuOpen ? styles.navOpen : ''}`}>
-          <Link href="/listings" className={`${styles.navLink} ${pathname === '/listings' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Browse Listings</Link>
+          <Link href="/listings" className={`${styles.navLink} ${pathname === '/listings' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Marketplace Listings</Link>
+          <Link href="/other-opportunities" className={`${styles.navLink} ${pathname === '/other-opportunities' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Other Opportunities</Link>
           <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
           {!user ? (
             <>

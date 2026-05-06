@@ -49,7 +49,13 @@ export default function AdminInquiriesPage() {
                 {inquiries.map(inq => (
                   <tr key={inq.id}>
                     <td><strong>{inq.anonymous_name || 'Registered Buyer'}</strong><br/><span style={{fontSize:12,color:'var(--text-tertiary)'}}>{inq.anonymous_email}</span></td>
-                    <td style={{fontSize:13}}><Link href={`/listings/${inq.listing_id}`} target="_blank" style={{color:'var(--primary)',textDecoration:'underline'}}>{inq.listings?.title}</Link></td>
+                    <td style={{fontSize:13}}>
+                      {inq.listings?.title ? (
+                        <Link href={`/listings/${inq.listing_id}`} target="_blank" style={{color:'var(--primary)',textDecoration:'underline'}}>{inq.listings.title}</Link>
+                      ) : (
+                        <span className="badge badge-gray">{inq.message?.match(/^\[(.+?)\]/)?.[1] || 'Other Opportunity'}</span>
+                      )}
+                    </td>
                     <td><span className={`badge badge-${INQUIRY_STATUSES[inq.inquiry_status]?.color || 'gray'}`}>{INQUIRY_STATUSES[inq.inquiry_status]?.label}</span></td>
                     <td>
                       <div style={{display:'flex',gap:4,flexDirection:'column'}}>
