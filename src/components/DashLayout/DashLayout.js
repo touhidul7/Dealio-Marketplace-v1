@@ -69,6 +69,7 @@ export default function DashLayout({ children, role }) {
       { href: '/admin/purchases', label: 'Purchases', icon: '💳' },
       { href: '/admin/services', label: 'Service Requests', icon: '⭐' },
       { href: '/admin/saved', label: 'Saved Listings', icon: '♥' },
+      { href: '/admin/blog', label: 'Blog Posts', icon: '📝' },
     ],
     advisor: [
       { href: '/advisor', label: 'Dashboard', icon: '📊' },

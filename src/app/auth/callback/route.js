@@ -22,8 +22,13 @@ export async function GET(request) {
       }
 
       // Otherwise route by role
+      const requestedRole = searchParams.get('role');
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        if (requestedRole && ['buyer', 'seller'].includes(requestedRole)) {
+          await supabase.from('users').update({ role: requestedRole }).eq('id', user.id);
+        }
+        
         const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
         if (profile?.role === 'seller') return NextResponse.redirect(`${origin}/seller`);
         if (profile?.role === 'admin') return NextResponse.redirect(`${origin}/admin`);

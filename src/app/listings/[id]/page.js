@@ -61,7 +61,7 @@ export default function ListingDetailPage() {
       message: inquiryForm.message,
       source_type: 'listing_detail_page',
       lead_owner_type: listing?.lead_owner_type || 'seller',
-      routed_to_user_id: listing?.owner_user_id,
+      routed_to_user_id: listing?.lead_owner_type === 'dealio' ? null : listing?.owner_user_id,
       wants_acquisition_support: inquiryForm.wants_support,
       needs_financing: inquiryForm.needs_financing,
     };
@@ -197,18 +197,23 @@ export default function ListingDetailPage() {
               <button onClick={handleSave} className={`btn ${saved ? 'btn-accent' : 'btn-secondary'}`} style={{ width: '100%' }}>
                 {saved ? '♥ Saved' : '♡ Save Listing'}
               </button>
-              <button onClick={() => setInquiryOpen(true)} className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 12 }}>
+              <button 
+                onClick={() => {
+                  if (!user) {
+                    router.push('/signup?role=buyer');
+                  } else {
+                    setInquiryOpen(true);
+                  }
+                }} 
+                className="btn btn-primary btn-lg" 
+                style={{ width: '100%', marginTop: 12 }}
+              >
                 Contact Seller / Inquire
               </button>
               <div className={styles.sideInfo}>
                 <p>📅 Listed {formatDate(listing.created_at)}</p>
                 <p>📦 Package: <strong style={{textTransform:'capitalize'}}>{listing.package_type}</strong></p>
               </div>
-            </div>
-            <div className={styles.sideCard}>
-              <h3 style={{fontSize: 15, fontWeight: 700, marginBottom: 12}}>Need Acquisition Support?</h3>
-              <p style={{fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16}}>Our advisory team can help with valuations, due diligence, and deal negotiation.</p>
-              <Link href="/pricing" className="btn btn-cta btn-sm" style={{ width: '100%', textAlign: 'center' }}>Explore Services</Link>
             </div>
           </aside>
         </div>

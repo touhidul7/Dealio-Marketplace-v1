@@ -1,4 +1,4 @@
-.authPage { min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: var(--space-8) var(--space-6); background: var(--bg-secondary); }
+.authPage { min-height: calc(100vh - 64px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-8) var(--space-6); background: var(--bg-secondary); }
 .authCard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--space-10); max-width: 440px; width: 100%; box-shadow: var(--shadow-lg); }
 .authHeader { text-align: center; margin-bottom: var(--space-8); }
 .authLogo { display: inline-flex; margin-bottom: var(--space-4); }
@@ -17,3 +17,17 @@
 .roleBtn { padding: var(--space-3) var(--space-4); border: 2px solid var(--border); border-radius: var(--radius-lg); background: var(--bg); font-size: 14px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
 .roleBtn:hover { border-color: var(--gray-300); }
 .roleBtnActive { border-color: var(--primary); background: var(--primary-50); color: var(--primary); }
+
+/* Buyer Section on Auth Page */
+.buyerSection { margin-top: var(--space-8); }
+.buyerCard { background: linear-gradient(135deg, var(--primary-50), #EBF8F3); border: 1px solid var(--primary-100); border-radius: var(--radius-2xl); padding: var(--space-10); display: grid; grid-template-columns: 1fr auto; gap: var(--space-10); align-items: center; max-width: 900px; width: 100%; margin: 0 auto; box-shadow: var(--shadow-sm); }
+.buyerLabel { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); display: block; margin-bottom: var(--space-2); }
+.buyerTitle { font-size: 26px; font-weight: 800; margin-bottom: var(--space-3); }
+.buyerDesc { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-5); }
+.buyerList { display: flex; flex-direction: column; gap: var(--space-2); font-size: 14px; color: var(--text-secondary); }
+.buyerCtas { display: flex; flex-direction: column; gap: var(--space-3); }
+
+@media (max-width: 768px) {
+  .buyerCard { grid-template-columns: 1fr; padding: var(--space-6); gap: var(--space-6); }
+  .buyerTitle { font-size: 22px; }
+}

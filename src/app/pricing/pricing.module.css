@@ -29,13 +29,6 @@
 .addonPrice { font-size: 18px; font-weight: 800; color: var(--primary); white-space: nowrap; font-family: var(--font-display); }
 .addonDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; flex: 1; }
 
-.buyerSection { margin-bottom: var(--space-16); }
-.buyerCard { background: linear-gradient(135deg, var(--primary-50), #EBF8F3); border: 1px solid var(--primary-100); border-radius: var(--radius-2xl); padding: var(--space-10); display: grid; grid-template-columns: 1fr auto; gap: var(--space-10); align-items: center; }
-.buyerLabel { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); display: block; margin-bottom: var(--space-2); }
-.buyerTitle { font-size: 26px; font-weight: 800; margin-bottom: var(--space-3); }
-.buyerDesc { font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-5); }
-.buyerList { display: flex; flex-direction: column; gap: var(--space-2); font-size: 14px; color: var(--text-secondary); }
-.buyerCtas { display: flex; flex-direction: column; gap: var(--space-3); }
 
 .faqSection { }
 .faqTitle { font-size: 28px; font-weight: 800; text-align: center; margin-bottom: var(--space-8); }
@@ -45,4 +38,4 @@
 .faqA { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
 
 @media (max-width: 1024px) { .packagesGrid { grid-template-columns: repeat(2, 1fr); } .addonsGrid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 768px) { .packagesGrid { grid-template-columns: 1fr; } .addonsGrid { grid-template-columns: 1fr; } .buyerCard { grid-template-columns: 1fr; } .faqGrid { grid-template-columns: 1fr; } .heroTitle { font-size: 28px; } }
+@media (max-width: 768px) { .packagesGrid { grid-template-columns: 1fr; } .addonsGrid { grid-template-columns: 1fr; } .faqGrid { grid-template-columns: 1fr; } .heroTitle { font-size: 28px; } }

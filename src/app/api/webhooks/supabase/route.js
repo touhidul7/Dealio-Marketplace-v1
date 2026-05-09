@@ -28,29 +28,42 @@ export async function POST(req) {
       // Get listing details and owner email
       const { data: listing } = await supabase
         .from('listings')
-        .select('title, owner_user_id, users!owner_user_id(email, full_name)')
+        .select('title, owner_user_id, lead_owner_type, users!owner_user_id(email, full_name)')
         .eq('id', listingId)
         .single();
 
-      if (listing && listing.users?.email && resendKey) {
-        const { error: resendErr } = await resend.emails.send({
-          from: 'Dealio Marketplace <notifications@brittosoft.site>',
-          to: listing.users.email,
-          subject: `New Inquiry for: ${listing.title}`,
-          html: `
-            <h2>You have a new inquiry!</h2>
-            <p>Someone is interested in your listing: <strong>${listing.title}</strong></p>
-            <p><strong>Name:</strong> ${record.anonymous_name || 'Anonymous'}</p>
-            <p><strong>Message:</strong></p>
-            <blockquote style="border-left: 4px solid #eee; padding-left: 10px; margin-left: 0;">
-              ${record.message || 'No message provided.'}
-            </blockquote>
-            <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/seller/inquiries" style="padding: 10px 16px; background: #0F52BA; color: white; text-decoration: none; border-radius: 6px;">View Inquiry in Dashboard</a></p>
-          `,
-        });
+      if (listing && resendKey) {
+        const isDealioManaged = listing.lead_owner_type === 'dealio';
+        let targetEmail = listing.users?.email;
 
-        if (resendErr) {
-          console.error('Resend Error (Inquiry):', resendErr);
+        if (isDealioManaged) {
+          const { data: admins } = await supabase.from('users').select('email').eq('role', 'admin');
+          const adminEmails = admins?.map(a => a.email).filter(Boolean) || [];
+          if (adminEmails.length > 0) {
+            targetEmail = adminEmails;
+          }
+        }
+
+        if (targetEmail && (typeof targetEmail === 'string' || targetEmail.length > 0)) {
+          const { error: resendErr } = await resend.emails.send({
+            from: 'Dealio Marketplace <notifications@brittosoft.site>',
+            to: targetEmail,
+            subject: `New Inquiry for: ${listing.title}`,
+            html: `
+              <h2>You have a new inquiry!</h2>
+              <p>Someone is interested in ${isDealioManaged ? 'the Dealio-managed listing' : 'your listing'}: <strong>${listing.title}</strong></p>
+              <p><strong>Name:</strong> ${record.anonymous_name || 'Anonymous'}</p>
+              <p><strong>Message:</strong></p>
+              <blockquote style="border-left: 4px solid #eee; padding-left: 10px; margin-left: 0;">
+                ${record.message || 'No message provided.'}
+              </blockquote>
+              <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/${isDealioManaged ? 'admin' : 'seller/inquiries'}" style="padding: 10px 16px; background: #0F52BA; color: white; text-decoration: none; border-radius: 6px;">View Inquiry in Dashboard</a></p>
+            `,
+          });
+
+          if (resendErr) {
+            console.error('Resend Error (Inquiry):', resendErr);
+          }
         }
       }
     }
@@ -138,6 +151,38 @@ export async function POST(req) {
 
           if (resendErr) {
             console.error('Resend Error (Service):', resendErr);
+          }
+        }
+      }
+    }
+
+    // 3. Listing Approval (Status Update to 'active')
+    if (table === 'listings' && type === 'UPDATE') {
+      if (old_record && old_record.status !== 'active' && record.status === 'active') {
+        const userId = record.owner_user_id;
+
+        const { data: user } = await supabase
+          .from('users')
+          .select('email, full_name')
+          .eq('id', userId)
+          .single();
+
+        if (user && user.email && resendKey) {
+          const { error: resendErr } = await resend.emails.send({
+            from: 'Dealio Marketplace <notifications@brittosoft.site>',
+            to: user.email,
+            subject: 'Your Dealio Listing is Now Live! 🎉',
+            html: `
+              <h2>Your listing has been approved!</h2>
+              <p>Hi ${user.full_name || 'there'},</p>
+              <p>Great news! Your listing for <strong>${record.title}</strong> has been reviewed and approved by our team.</p>
+              <p>It is now live on the Dealio Marketplace and visible to potential buyers.</p>
+              <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/listings/${record.id}" style="padding: 10px 16px; background: #0F52BA; color: white; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 12px;">View Your Live Listing</a></p>
+            `,
+          });
+
+          if (resendErr) {
+            console.error('Resend Error (Listing Approval):', resendErr);
           }
         }
       }

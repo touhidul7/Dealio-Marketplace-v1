@@ -124,27 +124,6 @@ export default async function PricingPage({ searchParams }) {
           </div>
         </div>
 
-        {/* Buyer Section */}
-        <div className={styles.buyerSection}>
-          <div className={styles.buyerCard}>
-            <div>
-              <span className={styles.buyerLabel}>For Buyers</span>
-              <h2 className={styles.buyerTitle}>Browse and Inquire for Free</h2>
-              <p className={styles.buyerDesc}>Creating a buyer profile and browsing listings is completely free. Get matched with businesses that fit your criteria automatically.</p>
-              <ul className={styles.buyerList}>
-                <li>✅ Free buyer profile</li>
-                <li>✅ Unlimited listing browsing</li>
-                <li>✅ Automatic match notifications</li>
-                <li>✅ Save up to 50 listings</li>
-                <li>✅ Direct seller inquiries</li>
-              </ul>
-            </div>
-            <div className={styles.buyerCtas}>
-              <Link href="/signup?role=buyer" className="btn btn-primary btn-lg">Create Buyer Profile</Link>
-              <Link href="/listings" className="btn btn-secondary btn-lg">Browse Listings</Link>
-            </div>
-          </div>
-        </div>
 
         {/* FAQ */}
         <div className={styles.faqSection}>
