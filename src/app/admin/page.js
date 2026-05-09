@@ -2,15 +2,20 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo } from '@/lib/constants';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import styles from './admin.module.css';
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({ users: 0, listings: 0, activeListings: 0, inquiries: 0, revenue: 0, serviceRequests: 0 });
   const [chartData, setChartData] = useState([]);
   const [pendingListings, setPendingListings] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
+  const [dealioStaffs, setDealioStaffs] = useState([]);
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMsg, setContactMsg] = useState({ type: '', text: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -35,7 +40,8 @@ export default function AdminDashboard() {
           { count: serviceRequestsCount },
           { data: purchases },
           { data: pending },
-          { data: users }
+          { data: users },
+          { data: admins }
         ] = await Promise.all([
           supabase.from('users').select('created_at', { count: 'exact' }),
           supabase.from('listings').select('created_at', { count: 'exact' }),
@@ -44,7 +50,8 @@ export default function AdminDashboard() {
           supabase.from('service_requests').select('*', { count: 'exact', head: true }),
           supabase.from('package_purchases').select('amount').eq('payment_status', 'completed'),
           supabase.from('listings').select('*').eq('status', 'pending_review').order('created_at', { ascending: false }).limit(5),
-          supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5)
+          supabase.from('users').select('*').order('created_at', { ascending: false }).limit(5),
+          supabase.from('users').select('*').eq('role', 'admin').order('created_at', { ascending: false })
         ]);
 
         if (uErr || lErr) throw uErr || lErr;
@@ -84,6 +91,7 @@ export default function AdminDashboard() {
         setChartData(Object.values(monthCounts));
         setPendingListings(pending || []);
         setRecentUsers(users || []);
+        setDealioStaffs(admins || []);
         finished = true;
         clearTimeout(timeout);
       } catch (err) {
@@ -99,6 +107,46 @@ export default function AdminDashboard() {
   const updateListingStatus = async (id, status) => {
     await supabase.from('listings').update({ status }).eq('id', id);
     setPendingListings(prev => prev.filter(l => l.id !== id));
+  };
+
+  const handleAddContact = async (e) => {
+    e.preventDefault();
+    setContactMsg({ type: '', text: '' });
+    if (!contactEmail) return;
+
+    const { data: targetUser, error: userErr } = await supabase.from('users').select('*').eq('email', contactEmail.trim().toLowerCase()).single();
+    if (userErr || !targetUser) {
+      setContactMsg({ type: 'error', text: 'User not found. They must sign up first.' });
+      return;
+    }
+
+    if (targetUser.role === 'admin') {
+      setContactMsg({ type: 'error', text: 'User is already a Dealio Staff member.' });
+      return;
+    }
+
+    const { error: updateErr } = await supabase.from('users').update({ role: 'admin' }).eq('id', targetUser.id);
+    if (updateErr) {
+      setContactMsg({ type: 'error', text: 'Failed to update user role.' });
+      return;
+    }
+
+    setDealioStaffs(prev => [{ ...targetUser, role: 'admin' }, ...prev]);
+    setContactEmail('');
+    setContactMsg({ type: 'success', text: 'User successfully added to Dealio Staff!' });
+  };
+
+  const handleRemoveContact = async (targetUserId) => {
+    if (targetUserId === user?.id) {
+      alert("You cannot remove yourself from Dealio Staff.");
+      return;
+    }
+    const { error: updateErr } = await supabase.from('users').update({ role: 'buyer' }).eq('id', targetUserId);
+    if (!updateErr) {
+      setDealioStaffs(prev => prev.filter(s => s.id !== targetUserId));
+    } else {
+      alert("Failed to remove staff member.");
+    }
   };
 
   if (loading) return <div><div className={styles.statsGrid}>{[1,2,3,4].map(i => <div key={i} className="stat-card skeleton" style={{height: 100}}></div>)}</div></div>;
@@ -237,6 +285,71 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Dealio Staff / Contacts Management */}
+      <div className={styles.section} style={{ marginTop: 'var(--space-8)' }}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Dealio Contacts / Staff</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>These users receive and manage "Dealio Managed" inquiries.</p>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'var(--space-6)' }}>
+          {/* Add Staff Form */}
+          <div style={{ background: 'var(--surface)', padding: 'var(--space-6)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Add Staff Member</h3>
+            <form onSubmit={handleAddContact}>
+              <div className="form-group">
+                <label className="form-label">User Email</label>
+                <input 
+                  type="email" 
+                  className="form-input" 
+                  value={contactEmail} 
+                  onChange={e => setContactEmail(e.target.value)} 
+                  placeholder="user@example.com" 
+                  required 
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Make Dealio Staff</button>
+            </form>
+            {contactMsg.text && (
+              <div style={{ marginTop: 16, padding: 12, borderRadius: 8, fontSize: 13, background: contactMsg.type === 'error' ? '#FEF2F2' : '#F0FDF4', color: contactMsg.type === 'error' ? '#B91C1C' : '#15803D' }}>
+                {contactMsg.text}
+              </div>
+            )}
+          </div>
+
+          {/* Current Staff List */}
+          <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+            {dealioStaffs.length === 0 ? (
+              <div style={{ padding: 'var(--space-6)', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                No Dealio Staff found.
+              </div>
+            ) : (
+              <div className="table-wrapper">
+                <table className="table">
+                  <thead><tr><th>Name</th><th>Email</th><th>Added</th><th></th></tr></thead>
+                  <tbody>
+                    {dealioStaffs.map(staff => (
+                      <tr key={staff.id}>
+                        <td><strong>{staff.full_name || 'No Name'}</strong></td>
+                        <td>{staff.email}</td>
+                        <td style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{timeAgo(staff.created_at)}</td>
+                        <td style={{ textAlign: 'right' }}>
+                          {staff.id !== user?.id && (
+                            <button onClick={() => handleRemoveContact(staff.id)} className="btn btn-sm btn-ghost" style={{ color: 'var(--text-secondary)' }}>
+                              Remove
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
