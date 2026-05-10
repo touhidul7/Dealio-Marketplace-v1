@@ -27,7 +27,8 @@ export async function POST(req) {
       .from('users')
       .update({
         package_type: packageId,
-        package_expiry: expiry
+        package_expiry: expiry,
+        role: 'seller'
       })
       .eq('id', userId);
 

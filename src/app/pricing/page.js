@@ -42,27 +42,25 @@ export default async function PricingPage({ searchParams }) {
   const upgradeId = params?.upgrade;
 
   const { data: { user } } = await supabase.auth.getUser();
-  const role = user?.user_metadata?.role;
-
-  // Fetch listings if seller
-  let userListings = [];
+  let role = user?.user_metadata?.role;
   let userPlan = null;
-  if (user && role === 'seller') {
-    const { data } = await supabase.from('listings').select('id, title').eq('owner_user_id', user.id);
-    userListings = data || [];
-    
-    const { data: profile } = await supabase.from('users').select('package_type, package_expiry').eq('id', user.id).single();
+  
+  if (user) {
+    const { data: profile } = await supabase.from('users').select('role, package_type, package_expiry').eq('id', user.id).single();
     if (profile) {
-       const isExpired = profile.package_expiry && new Date(profile.package_expiry) < new Date();
-       userPlan = isExpired ? 'basic' : (profile.package_type || 'basic');
+       role = profile.role || role;
+       if (role === 'seller') {
+         const isExpired = profile.package_expiry && new Date(profile.package_expiry) < new Date();
+         userPlan = isExpired ? 'basic' : (profile.package_type || 'basic');
+       }
     }
   }
 
   const getHref = (pkg) => {
     if (pkg.id === 'full_advisory') return '/#contact';
     
-    if (user && (role === 'seller' || role === 'admin')) {
-      // Direct to account-level checkout
+    if (user) {
+      // Direct any logged-in user to checkout. If they are a buyer, this will upgrade them to a seller.
       return `/checkout?package=${pkg.id}`;
     }
     return pkg.href;
