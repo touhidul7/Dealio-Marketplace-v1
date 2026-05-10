@@ -6,7 +6,7 @@ import { useAuth } from '@/components/AuthProvider';
 import styles from './DashLayout.module.css';
 
 export default function DashLayout({ children, role }) {
-  const { user, userRole, loading } = useAuth();
+  const { user, userRole, userPlan, loading } = useAuth();
   const [sideOpen, setSideOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -132,6 +132,15 @@ export default function DashLayout({ children, role }) {
             <div>
               <div className={styles.userName}>{user?.user_metadata?.full_name || 'User'}</div>
               <div className={styles.userEmail}>{user?.email}</div>
+              {role === 'seller' && userPlan && (
+                <div style={{ marginTop: '6px' }}>
+                  <Link href="/pricing" style={{ textDecoration: 'none' }}>
+                    <span className="badge badge-primary" style={{ fontSize: '11px', padding: '3px 8px', textTransform: 'capitalize', cursor: 'pointer' }}>
+                      {userPlan} Plan
+                    </span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
           <button className={styles.logoutBtn} onClick={handleLogout}>Sign Out</button>

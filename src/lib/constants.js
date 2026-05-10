@@ -31,7 +31,7 @@ export const PACKAGES = [
     listingLimit: 1, isFeatured: false, isVerified: false, prioritySort: 0, listingDays: 30,
   },
   {
-    id: 'pro', name: 'Pro', price: 149, period: '/month',
+    id: 'pro', name: 'Pro', price: 0, period: '/month',
     features: ['Up to 5 business listings', 'Enhanced listing page', 'Priority placement', 'Inquiry screening', 'Performance stats', 'Email notifications'],
     color: 'var(--primary)', popular: true,
     listingLimit: 5, isFeatured: false, isVerified: true, prioritySort: 1, listingDays: 90,

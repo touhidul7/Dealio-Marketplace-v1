@@ -6,52 +6,56 @@ const packages = [
   {
     id: 'basic', name: 'Basic', price: 0, period: 'Free forever',
     color: '#64748B', tag: null,
-    features: ['1 business listing', 'Standard listing page', 'Direct buyer inquiries', 'Basic search placement', '30-day listing'],
+    features: ['1 business listing', 'Standard listing page', 'Basic search placement', 'Direct buyer interest inquires', '*Buyer contact details will not be provided until you upgrade plan*'],
     cta: 'Get Started Free', href: '/signup?role=seller',
   },
   {
-    id: 'pro', name: 'Pro', price: 149, period: '/month',
+    id: 'pro', name: 'Pro', price: 49, period: '/month',
+    strikethrough: true,
+    promoText: '*Lock in early access before paid plans begin. Free until Jan 1, 2027.',
     color: '#0F52BA', tag: 'Most Popular',
-    features: ['Enhanced listing page', 'Priority search placement', 'Inquiry screening', 'Performance analytics', 'Email notifications', '90-day listing', 'PDF teaser download'],
+    features: ['Direct buyer inquiries', 'Inquiry screening', 'Performance analytics', 'Email notifications', 'PDF teaser download'],
     cta: 'Start Pro', href: '/signup?role=seller&package=pro',
-  },
-  {
-    id: 'premium', name: 'Premium', price: 399, period: '/month',
-    color: '#10B981', tag: 'Best Value',
-    features: ['Featured listing badge', 'Top search placement', 'Buyer outreach campaigns', 'CIM creation support', 'Dedicated advisor support', '180-day listing', 'Verified seller badge', 'Advanced analytics'],
-    cta: 'Start Premium', href: '/signup?role=seller&package=premium',
   },
   {
     id: 'full_advisory', name: 'Full Advisory', price: null, period: 'Custom pricing',
     color: '#D97706', tag: 'White Glove',
-    features: ['Full Dealio representation', 'Proprietary buyer sourcing', 'Deal management', 'Negotiation support', 'Due diligence coordination', 'Closing & transition support', 'Success fee structure available'],
+    features: ['Full Advisor representation', 'Proprietary buyer sourcing', 'Deal management', 'Negotiation support', 'Due diligence coordination', 'Closing & transition support', 'Success fee structure available'],
     cta: 'Talk to Dealio', href: '/#contact',
   },
 ];
 
 const addons = [
-  { name: 'Teaser / Executive Summary', price: 299, desc: 'Professional one-page teaser created by our team' },
-  { name: 'CIM Creation', price: 999, desc: 'Full Confidential Information Memorandum written by advisors' },
-  { name: 'Valuation Guidance', price: 499, desc: 'Market-based valuation range with comparable transactions' },
-  { name: 'Buyer Outreach Campaign', price: 699, desc: 'Targeted outreach to our network of qualified buyers' },
-  { name: 'Deal-Readiness Review', price: 349, desc: 'Advisor-led review of your business readiness to sell' },
-  { name: 'Paid Promotion', price: 199, desc: 'Feature your listing in email newsletters and social campaigns' },
+  { name: 'Teaser / Executive Summary', price: 99, desc: 'Professional one-page teaser created by our team' },
+  { name: 'CIM Creation', price: 599, desc: 'Full Confidential Information Memorandum + Proforma' },
+  { name: 'Valuation Guidance', price: 999, desc: 'Market-based valuation range with comparable transactions' },
+  { name: 'Buyer Outreach Campaign', price: 699, desc: 'We build a targeted buyer lead list and execute direct outreach campaigns to buyers' },
+  { name: 'Deal-Readiness Review', price: 499, desc: 'Advisor-led review of your business readiness to sell' },
+  { name: 'Paid Promotion', price: 699, desc: <>Feature your listing in email newsletters and social campaigns.<br />*Includes 3 months of paid advertising campaigns across social platforms.</> },
 ];
 
 export const metadata = { title: 'Pricing – Dealio Marketplace', description: 'Choose the right listing package for your business sale. From free basic listings to full advisory representation.' };
 
 export default async function PricingPage({ searchParams }) {
   const supabase = await createClient();
-  const upgradeId = searchParams?.upgrade;
+  const params = await searchParams;
+  const upgradeId = params?.upgrade;
 
   const { data: { user } } = await supabase.auth.getUser();
   const role = user?.user_metadata?.role;
 
   // Fetch listings if seller
   let userListings = [];
+  let userPlan = null;
   if (user && role === 'seller') {
     const { data } = await supabase.from('listings').select('id, title').eq('owner_user_id', user.id);
     userListings = data || [];
+    
+    const { data: profile } = await supabase.from('users').select('package_type, package_expiry').eq('id', user.id).single();
+    if (profile) {
+       const isExpired = profile.package_expiry && new Date(profile.package_expiry) < new Date();
+       userPlan = isExpired ? 'basic' : (profile.package_type || 'basic');
+    }
   }
 
   const getHref = (pkg) => {
@@ -70,6 +74,11 @@ export default async function PricingPage({ searchParams }) {
         <div className="container">
           <h1 className={styles.heroTitle}>Simple, Transparent Pricing</h1>
           <p className={styles.heroSub}>Choose the plan that fits your business sale goals. Upgrade or downgrade any time.</p>
+          {userPlan && (
+            <div style={{ marginTop: '1.5rem', display: 'inline-block', background: 'var(--surface)', padding: '0.75rem 1.5rem', borderRadius: '100px', fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-sm)' }}>
+              Your active plan: <span style={{ color: 'var(--primary)', fontWeight: 700, textTransform: 'capitalize' }}>{userPlan}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -83,7 +92,20 @@ export default async function PricingPage({ searchParams }) {
                 <h2 className={styles.pkgName}>{pkg.name}</h2>
                 <div className={styles.pkgPrice}>
                   {pkg.price !== null ? (
-                    <><span className={styles.pkgAmount}>${pkg.price.toLocaleString()}</span><span className={styles.pkgPeriod}>{pkg.period}</span></>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div>
+                        {pkg.strikethrough ? (
+                           <><span className={styles.pkgAmount} style={{ textDecoration: 'line-through', color: '#9CA3AF' }}>${pkg.price.toLocaleString()}</span><span className={styles.pkgPeriod} style={{ textDecoration: 'line-through', color: '#9CA3AF' }}>{pkg.period}</span></>
+                        ) : (
+                           <><span className={styles.pkgAmount}>${pkg.price.toLocaleString()}</span><span className={styles.pkgPeriod}>{pkg.period}</span></>
+                        )}
+                      </div>
+                      {pkg.promoText && (
+                        <div style={{ fontSize: '0.85rem', color: '#0F52BA', marginTop: '0.5rem', fontWeight: 500, fontStyle: 'italic', lineHeight: 1.4 }}>
+                          {pkg.promoText}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <><span className={styles.pkgAmount} style={{ fontSize: 24 }}>Custom</span><span className={styles.pkgPeriod}>{pkg.period}</span></>
                   )}

@@ -29,7 +29,23 @@ function CheckoutContent() {
     setError('');
     try {
       if (!user) throw new Error('Your session has expired. Please log in again.');
-      if (!pkg || pkg.price === 0) throw new Error('Invalid package');
+      if (!pkg) throw new Error('Invalid package');
+
+      if (pkg.price === 0) {
+        const res = await fetch('/api/upgrade/free', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ packageId: pkgId, userId: user.id }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error('Upgrade failed');
+        }
+        return;
+      }
 
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -69,7 +85,7 @@ function CheckoutContent() {
     );
   }
 
-  if (!pkg || pkg.price === 0) {
+  if (!pkg) {
     return (
       <div className="container" style={{ padding: '100px 20px', textAlign: 'center' }}>
         <h2>Invalid Package</h2>
@@ -107,7 +123,7 @@ function CheckoutContent() {
           onClick={handleCheckout}
           disabled={loading}
         >
-          {loading ? 'Processing...' : `Pay $${pkg.price} with Stripe`}
+          {loading ? 'Processing...' : pkg.price === 0 ? `Get ${pkg.name} for Free` : `Pay $${pkg.price} with Stripe`}
         </button>
 
 

@@ -11,6 +11,7 @@ export function useAuth() {
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [userPlan, setUserPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const fetchingRole = useRef(false);
@@ -24,10 +25,14 @@ export default function AuthProvider({ children }) {
         setTimeout(() => reject(new Error('Role fetch timeout')), 5000)
       );
       
-      const rolePromise = supabase.from('users').select('role').eq('id', userId).single();
+      const rolePromise = supabase.from('users').select('role, package_type, package_expiry').eq('id', userId).single();
       const { data: profile } = await Promise.race([rolePromise, timeoutPromise]);
       
-      if (profile) setUserRole(profile.role);
+      if (profile) {
+        setUserRole(profile.role);
+        const isExpired = profile.package_expiry && new Date(profile.package_expiry) < new Date();
+        setUserPlan(isExpired ? 'basic' : (profile.package_type || 'basic'));
+      }
     } catch (err) {
       console.error('Failed to fetch user role:', err);
     } finally {
@@ -82,7 +87,7 @@ export default function AuthProvider({ children }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <AuthContext.Provider value={{ user, userRole, loading, supabase }}>
+    <AuthContext.Provider value={{ user, userRole, userPlan, loading, supabase }}>
       {children}
     </AuthContext.Provider>
   );
