@@ -23,7 +23,7 @@
 .navDropdownBtn { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); background: none; border: none; cursor: pointer; font-family: inherit; margin: 0; }
 .dropdownIcon { transition: transform var(--transition-fast); }
 .navDropdownBtn[aria-expanded="true"] .dropdownIcon { transform: rotate(180deg); }
-.navDropdown { position: absolute; top: calc(100% + 4px); left: 0; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: slideDown 0.2s ease; overflow: hidden; padding: var(--space-2) 0; }
+.navDropdown { position: absolute; top: calc(100% + 1px); left: 0; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: slideDown 0.2s ease; overflow: hidden; padding: var(--space-2) 0; }
 .navDropdownItem { display: block; padding: var(--space-2) var(--space-4); font-size: 14px; color: var(--text-secondary); text-decoration: none; transition: all var(--transition-fast); }
 .navDropdownItem:hover { background: var(--gray-50); color: var(--primary); }
 
