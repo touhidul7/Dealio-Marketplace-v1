@@ -18,6 +18,7 @@
 .pkgCta { margin: 0 var(--space-6) var(--space-6); padding: 12px; border-radius: var(--radius-md); border: 2px solid; font-weight: 700; font-size: 14px; text-align: center; transition: all var(--transition-base); }
 .pkgCta:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
+
 .addonsSection { margin-bottom: var(--space-16); }
 .addonsHeader { text-align: center; margin-bottom: var(--space-8); }
 .addonsTitle { font-size: 28px; font-weight: 800; }
