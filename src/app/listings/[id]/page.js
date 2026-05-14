@@ -55,8 +55,8 @@ export default function ListingDetailPage() {
     const payload = {
       listing_id: id,
       buyer_user_id: user?.id || null,
-      anonymous_name: user ? null : inquiryForm.name,
-      anonymous_email: user ? null : inquiryForm.email,
+      anonymous_name: inquiryForm.name || null,
+      anonymous_email: inquiryForm.email || null,
       anonymous_phone: inquiryForm.phone || null,
       message: inquiryForm.message,
       source_type: 'listing_detail_page',

@@ -7,8 +7,8 @@ export async function createGHLContact({ firstName, lastName, email, phone, sour
     return null;
   }
 
-  // GoHighLevel V2 API Endpoint for Contacts
-  const endpoint = 'https://services.leadconnectorhq.com/contacts/';
+  // GoHighLevel V2 API Endpoint for Contacts (Upsert prevents duplicate contact errors)
+  const endpoint = 'https://services.leadconnectorhq.com/contacts/upsert';
 
   const payload = {
     locationId,
