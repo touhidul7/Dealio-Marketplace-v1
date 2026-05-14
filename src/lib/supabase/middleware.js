@@ -33,14 +33,28 @@ export async function updateSession(request) {
   // For public routes, just refresh the session cookie silently.
   // Do NOT query the database here — that causes auth lock conflicts with the browser client.
   const pathname = request.nextUrl.pathname
+
+  // MFA verify page — requires basic auth (aal1) but not full MFA.
+  // User must be logged in to verify their 2FA code.
+  const isMfaVerify = pathname.startsWith('/auth/mfa-verify')
+
   const isProtected = pathname.startsWith('/seller') || 
                       pathname.startsWith('/admin') || 
                       pathname.startsWith('/dashboard') ||
                       pathname.startsWith('/advisor') ||
                       pathname.startsWith('/buyer') ||
-                      pathname.startsWith('/checkout')
+                      pathname.startsWith('/checkout') ||
+                      pathname.startsWith('/settings')
 
-  if (isProtected) {
+  if (isMfaVerify) {
+    // MFA verify page: user must be logged in (aal1), redirect to login if not
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+  } else if (isProtected) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       const url = request.nextUrl.clone()

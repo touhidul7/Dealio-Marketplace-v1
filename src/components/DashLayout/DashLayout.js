@@ -6,22 +6,45 @@ import { useAuth } from '@/components/AuthProvider';
 import styles from './DashLayout.module.css';
 
 export default function DashLayout({ children, role }) {
-  const { user, userRole, userPlan, loading } = useAuth();
+  const { user, userRole, userPlan, loading, supabase } = useAuth();
   const [sideOpen, setSideOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [mfaChecking, setMfaChecking] = useState(true);
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else if (userRole && userRole !== 'admin' && userRole !== role) {
-        router.push(`/${userRole}`);
+        return;
       }
-    }
-  }, [user, userRole, loading, role, router]);
 
-  if (loading || !user) {
+      // Check MFA status
+      const checkMfa = async () => {
+        try {
+          const { data: { currentLevel, nextLevel } } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (currentLevel === 'aal1' && nextLevel === 'aal2') {
+            const mfaUrl = new URL('/auth/mfa-verify', window.location.origin);
+            mfaUrl.searchParams.set('redirect', pathname);
+            router.push(mfaUrl.pathname + mfaUrl.search);
+            return;
+          }
+        } catch (e) {
+          console.warn('MFA check failed:', e);
+        }
+        
+        setMfaChecking(false);
+
+        if (userRole && userRole !== 'admin' && userRole !== role) {
+          router.push(`/${userRole}`);
+        }
+      };
+
+      checkMfa();
+    }
+  }, [user, userRole, loading, role, router, pathname, supabase]);
+
+  if (loading || !user || mfaChecking) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
   }
 
@@ -70,6 +93,7 @@ export default function DashLayout({ children, role }) {
       { href: '/admin/services', label: 'Service Requests', icon: '⭐' },
       { href: '/admin/saved', label: 'Saved Listings', icon: '♥' },
       { href: '/admin/blog', label: 'Blog Posts', icon: '📝' },
+      { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     advisor: [
       { href: '/advisor', label: 'Dashboard', icon: '📊' },

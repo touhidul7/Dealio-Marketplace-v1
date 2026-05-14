@@ -18,7 +18,23 @@ export default function AdminDashboard() {
   const [contactMsg, setContactMsg] = useState({ type: '', text: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [mfaEnabled, setMfaEnabled] = useState(true); // assume true to avoid flash
+  const [mfaBannerDismissed, setMfaBannerDismissed] = useState(false);
   const supabase = createClient();
+
+  // Check if admin has 2FA enabled
+  useEffect(() => {
+    const checkMFA = async () => {
+      try {
+        const { data } = await supabase.auth.mfa.listFactors();
+        const verified = data?.totp?.filter(f => f.status === 'verified') || [];
+        setMfaEnabled(verified.length > 0);
+      } catch (e) {
+        // silently ignore — default to hiding banner
+      }
+    };
+    checkMFA();
+  }, [supabase]);
 
   useEffect(() => {
     let finished = false;
@@ -153,6 +169,58 @@ export default function AdminDashboard() {
 
   return (
     <div>
+      {/* 2FA Security Notice for Admins */}
+      {!mfaEnabled && !mfaBannerDismissed && (
+        <div style={{
+          background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)',
+          border: '1px solid #F59E0B',
+          borderRadius: 14,
+          padding: '16px 20px',
+          marginBottom: 24,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)',
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12,
+            background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22, flexShrink: 0,
+          }}>🔐</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#92400E', marginBottom: 2 }}>
+              Secure your admin account with 2FA
+            </div>
+            <div style={{ fontSize: 13, color: '#A16207', lineHeight: 1.5 }}>
+              As an administrator, we strongly recommend enabling two-factor authentication to protect your account and the platform.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <Link
+              href="/settings?tab=security"
+              className="btn btn-sm"
+              style={{
+                background: '#92400E', color: '#fff', border: 'none',
+                fontWeight: 600, fontSize: 13, padding: '8px 16px',
+              }}
+            >
+              Enable 2FA
+            </Link>
+            <button
+              onClick={() => setMfaBannerDismissed(true)}
+              style={{
+                background: 'transparent', border: '1px solid #D97706',
+                borderRadius: 8, cursor: 'pointer', padding: '8px 12px',
+                color: '#92400E', fontSize: 13, fontWeight: 600,
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={styles.pageHeader}>
         <div>
           <h1 className="page-title">Admin Console</h1>

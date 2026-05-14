@@ -28,6 +28,19 @@ function LoginForm() {
     // Use the user from the sign-in response directly — do NOT call getUser() again
     const user = data?.user;
     if (user) {
+      // Check if user has MFA (TOTP) factors enrolled
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      const hasMFA = factorsData?.totp?.length > 0;
+
+      if (hasMFA) {
+        // User has 2FA enabled — redirect to MFA verify page
+        const mfaUrl = new URL('/auth/mfa-verify', window.location.origin);
+        if (redirect) mfaUrl.searchParams.set('redirect', redirect);
+        router.push(mfaUrl.pathname + mfaUrl.search);
+        return;
+      }
+
+      // No MFA — proceed with normal role-based redirect
       const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
       if (redirect) { router.push(redirect); }
       else if (profile?.role === 'admin') { router.push('/admin'); }
