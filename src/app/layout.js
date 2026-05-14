@@ -3,6 +3,7 @@ import Navbar from '@/components/Navbar/Navbar';
 import Footer from '@/components/Footer/Footer';
 import AuthProvider from '@/components/AuthProvider';
 import MainLayoutWrapper from '@/components/MainLayoutWrapper';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
   title: 'Dealio Marketplace – Buy & Sell Businesses',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
           </MainLayoutWrapper>
           <Footer />
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
