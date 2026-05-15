@@ -64,6 +64,7 @@ export default function ListingDetailPage() {
       routed_to_user_id: listing?.lead_owner_type === 'dealio' ? null : listing?.owner_user_id,
       wants_acquisition_support: inquiryForm.wants_support,
       needs_financing: inquiryForm.needs_financing,
+      business_industry: listing?.industry || null
     };
     
     await fetch('/api/inquiries', {

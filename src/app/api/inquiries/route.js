@@ -10,6 +10,7 @@ export async function POST(req) {
     const payloadForDb = { ...body };
     delete payloadForDb.dealio_id; // Not a DB column
     delete payloadForDb.ghl_source; // Not a DB column
+    delete payloadForDb.business_industry; // Not a DB column
 
     // 1. Insert into Supabase
     const { data: inquiry, error } = await supabase
@@ -51,6 +52,7 @@ export async function POST(req) {
           customData: {
             'Listing ID': body.listing_id || 'N/A',
             'Dealio ID': body.dealio_id || 'N/A',
+            'Business Industry': body.business_industry || 'N/A',
             'Message': body.message,
             'Wants Acquisition Support': body.wants_acquisition_support ? 'Yes' : 'No',
             'Needs Financing': body.needs_financing ? 'Yes' : 'No'

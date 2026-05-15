@@ -137,7 +137,8 @@ export default function OtherOpportunities() {
         : `Interested in other opportunity: ${dealioRef}`,
       source_type: 'direct_link', // DB CHECK constraint only allows specific values
       dealio_id: dealioRef, // Passed to GHL as a tag, stripped before DB insert
-      ghl_source: 'other_opportunities' // Used by API for GHL source label only
+      ghl_source: 'other_opportunities', // Used by API for GHL source label only
+      business_industry: selectedListing.asset_class || selectedListing.industry || null // Pass industry to GHL
     };
     
     try {

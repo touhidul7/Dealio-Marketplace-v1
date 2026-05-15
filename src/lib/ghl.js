@@ -22,6 +22,22 @@ export async function createGHLContact({ firstName, lastName, email, phone, sour
     customFields: []
   };
 
+  // Map Dealio ID custom field using its GHL key
+  if (customData['Dealio ID'] && customData['Dealio ID'] !== 'N/A') {
+    payload.customFields.push({
+      key: "dealio_id",
+      value: customData['Dealio ID']
+    });
+  }
+
+  // Map Business Industry custom field using its GHL key
+  if (customData['Business Industry'] && customData['Business Industry'] !== 'N/A') {
+    payload.customFields.push({
+      key: "business_industry",
+      value: customData['Business Industry']
+    });
+  }
+
   // Convert customData into a single notes field for now, unless specific customField IDs are provided
   let notes = '';
   for (const [key, value] of Object.entries(customData)) {
