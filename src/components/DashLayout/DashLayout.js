@@ -151,47 +151,47 @@ export default function DashLayout({ children, role }) {
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="var(--primary)"/><path d="M8 16C8 11.582 11.582 8 16 8C20.418 8 24 11.582 24 16C24 20.418 20.418 24 16 24" stroke="white" strokeWidth="2.5" strokeLinecap="round"/><path d="M16 24C16 21.791 14.209 20 12 20" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
             <span>Dealio</span>
           </Link>
-          <span className={styles.portalLabel}>{roleLabels[role]}</span>
+          
+          {/* Portal Switcher Dropdown */}
+          {showPortalSwitcher ? (
+            <div style={{ marginTop: '12px' }}>
+              <select
+                value={role}
+                onChange={(e) => {
+                  setSideOpen(false);
+                  router.push(`/${e.target.value}`);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 12px top 50%',
+                  backgroundSize: '10px auto',
+                }}
+              >
+                {accessiblePortals.filter(p => p !== 'admin' || userRoles.includes('admin')).map(portal => (
+                  <option key={portal} value={portal} style={{ color: '#000' }}>
+                    {PORTAL_LABELS[portal] || portal.charAt(0).toUpperCase() + portal.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <span className={styles.portalLabel}>{roleLabels[role]}</span>
+          )}
         </div>
 
-        {/* Portal Switcher */}
-        {showPortalSwitcher && (
-          <div className={styles.portalSwitcher || ''} style={{
-            padding: '0 var(--space-3)',
-            marginBottom: 'var(--space-2)',
-          }}>
-            <div style={{
-              background: 'rgba(255,255,255,0.06)',
-              borderRadius: 10,
-              padding: '6px',
-              display: 'flex',
-              gap: '4px',
-              flexWrap: 'wrap',
-            }}>
-              {accessiblePortals.filter(p => p !== 'admin' || userRoles.includes('admin')).map(portal => (
-                <Link
-                  key={portal}
-                  href={`/${portal}`}
-                  style={{
-                    flex: '1 1 auto',
-                    padding: '6px 10px',
-                    borderRadius: 8,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                    background: portal === role ? 'var(--primary)' : 'transparent',
-                    color: portal === role ? '#fff' : 'rgba(255,255,255,0.5)',
-                  }}
-                  onClick={() => setSideOpen(false)}
-                >
-                  {portal.charAt(0).toUpperCase() + portal.slice(1)}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Portal Switcher was moved to sideHeader */}
 
         <nav className={styles.nav}>
           {items.map(item => (
@@ -207,13 +207,20 @@ export default function DashLayout({ children, role }) {
             <div>
               <div className={styles.userName}>{user?.user_metadata?.full_name || 'User'}</div>
               <div className={styles.userEmail}>{user?.email}</div>
-              {/* Show role badges */}
-              <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
-                {userRoles.map(r => (
-                  <span key={r} className="badge badge-primary" style={{ fontSize: '9px', padding: '2px 6px', textTransform: 'capitalize' }}>
-                    {ROLE_LABELS[r] || r}
+              {/* Show condensed role badges */}
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                <span className="badge badge-primary" style={{ fontSize: '10px', padding: '3px 8px', textTransform: 'capitalize' }}>
+                  {ROLE_LABELS[userRoles[0]] || userRoles[0]}
+                </span>
+                {userRoles.length > 1 && (
+                  <span 
+                    className="badge" 
+                    style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', fontSize: '10px', padding: '3px 8px' }} 
+                    title={userRoles.slice(1).map(r => ROLE_LABELS[r]).join(', ')}
+                  >
+                    +{userRoles.length - 1} more
                   </span>
-                ))}
+                )}
               </div>
               {role === 'seller' && userPlan && (
                 <div style={{ marginTop: '4px' }}>
