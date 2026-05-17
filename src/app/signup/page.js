@@ -31,6 +31,19 @@ function SignupForm() {
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Redirect if already logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('users').select('role, roles').eq('id', user.id).single();
+        const roles = (profile?.roles?.length) ? profile.roles : [profile?.role || 'buyer'];
+        router.push(getDashboardPath(roles));
+      }
+    };
+    checkUser();
+  }, [router, supabase]);
+
   const toggleIntent = (id) => {
     setSelectedIntents(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]

@@ -15,6 +15,19 @@ function LoginForm() {
   const redirect = searchParams.get('redirect') || '';
   const supabase = createClient();
 
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('users').select('role, roles').eq('id', user.id).single();
+        const roles = (profile?.roles?.length) ? profile.roles : [profile?.role || 'buyer'];
+        const { getDashboardPath } = await import('@/lib/roles');
+        router.push(redirect || getDashboardPath(roles));
+      }
+    };
+    checkUser();
+  }, [router, redirect, supabase]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
