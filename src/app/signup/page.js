@@ -12,6 +12,7 @@ function SignupForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -39,10 +40,16 @@ function SignupForm() {
         const { data: profile } = await supabase.from('users').select('role, roles').eq('id', user.id).single();
         const roles = (profile?.roles?.length) ? profile.roles : [profile?.role || 'buyer'];
         router.push(getDashboardPath(roles));
+      } else {
+        setCheckingAuth(false);
       }
     };
     checkUser();
   }, [router, supabase]);
+
+  if (checkingAuth) {
+    return <div className={styles.authPage}><div className="spinner"></div></div>;
+  }
 
   const toggleIntent = (id) => {
     setSelectedIntents(prev =>

@@ -1,5 +1,5 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -10,6 +10,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '';
@@ -23,10 +24,16 @@ function LoginForm() {
         const roles = (profile?.roles?.length) ? profile.roles : [profile?.role || 'buyer'];
         const { getDashboardPath } = await import('@/lib/roles');
         router.push(redirect || getDashboardPath(roles));
+      } else {
+        setCheckingAuth(false);
       }
     };
     checkUser();
   }, [router, redirect, supabase]);
+
+  if (checkingAuth) {
+    return <div className={styles.authPage}><div className="spinner"></div></div>;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

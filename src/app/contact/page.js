@@ -57,7 +57,7 @@ export default function ContactPage() {
       </div>
 
       {/* Main Content */}
-      <div style={{ maxWidth: 1200, margin: '-60px auto 100px', padding: '0 20px', position: 'relative', zIndex: 10 }}>
+      <div style={{ maxWidth: 1200, margin: '40px auto 100px', padding: '0 20px', position: 'relative', zIndex: 10 }}>
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
