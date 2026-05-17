@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -9,9 +9,21 @@ import styles from './DashLayout.module.css';
 export default function DashLayout({ children, role }) {
   const { user, userRoles, userRole, userPlan, loading, supabase } = useAuth();
   const [sideOpen, setSideOpen] = useState(false);
+  const [portalDropdownOpen, setPortalDropdownOpen] = useState(false);
+  const portalDropdownRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
   const [mfaChecking, setMfaChecking] = useState(true);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (portalDropdownRef.current && !portalDropdownRef.current.contains(event.target)) {
+        setPortalDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -154,13 +166,9 @@ export default function DashLayout({ children, role }) {
           
           {/* Portal Switcher Dropdown */}
           {showPortalSwitcher ? (
-            <div style={{ marginTop: '12px' }}>
-              <select
-                value={role}
-                onChange={(e) => {
-                  setSideOpen(false);
-                  router.push(`/${e.target.value}`);
-                }}
+            <div style={{ marginTop: '12px', position: 'relative' }} ref={portalDropdownRef}>
+              <button
+                onClick={() => setPortalDropdownOpen(!portalDropdownOpen)}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -172,19 +180,63 @@ export default function DashLayout({ children, role }) {
                   fontWeight: '600',
                   outline: 'none',
                   cursor: 'pointer',
-                  appearance: 'none',
-                  backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 12px top 50%',
-                  backgroundSize: '10px auto',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'all 0.2s ease',
                 }}
+                onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
               >
-                {accessiblePortals.filter(p => p !== 'admin' || userRoles.includes('admin')).map(portal => (
-                  <option key={portal} value={portal} style={{ color: '#000' }}>
-                    {PORTAL_LABELS[portal] || portal.charAt(0).toUpperCase() + portal.slice(1)}
-                  </option>
-                ))}
-              </select>
+                <span>{PORTAL_LABELS[role] || role.charAt(0).toUpperCase() + role.slice(1)}</span>
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ transform: portalDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              
+              {portalDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  background: 'var(--gray-800)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  zIndex: 50,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}>
+                  {accessiblePortals.filter(p => p !== 'admin' || userRoles.includes('admin')).map(portal => (
+                    <button
+                      key={portal}
+                      onClick={() => {
+                        setPortalDropdownOpen(false);
+                        setSideOpen(false);
+                        router.push(`/${portal}`);
+                      }}
+                      style={{
+                        padding: '10px 12px',
+                        background: portal === role ? 'var(--primary)' : 'transparent',
+                        color: portal === role ? '#fff' : 'rgba(255,255,255,0.7)',
+                        border: 'none',
+                        textAlign: 'left',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseOver={e => { if (portal !== role) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#fff'; }}
+                      onMouseOut={e => { if (portal !== role) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; } }}
+                    >
+                      {PORTAL_LABELS[portal] || portal.charAt(0).toUpperCase() + portal.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <span className={styles.portalLabel}>{roleLabels[role]}</span>
