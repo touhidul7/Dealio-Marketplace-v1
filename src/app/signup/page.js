@@ -3,33 +3,65 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { SIGNUP_INTENTS, intentsToRoles, getDashboardPath, ROLE_LABELS } from '@/lib/roles';
 import styles from '../auth.module.css';
 
 function SignupForm() {
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', role: 'buyer' });
+  const [selectedIntents, setSelectedIntents] = useState([]);
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const preselectedRole = searchParams.get('role');
   const supabase = createClient();
 
+  // Pre-select based on query param (e.g. ?intent=sell_business)
   useEffect(() => {
-    if (preselectedRole && form.role !== preselectedRole && ['buyer', 'seller'].includes(preselectedRole)) {
-      setForm(f => ({ ...f, role: preselectedRole }));
+    const intent = searchParams.get('intent');
+    if (intent && SIGNUP_INTENTS.some(i => i.id === intent) && !selectedIntents.includes(intent)) {
+      setSelectedIntents([intent]);
     }
-  }, [preselectedRole]);
+    // Legacy support: ?role=seller → pre-select sell intent
+    const legacyRole = searchParams.get('role');
+    if (legacyRole === 'seller' && selectedIntents.length === 0) {
+      setSelectedIntents(['sell_business']);
+    } else if (legacyRole === 'buyer' && selectedIntents.length === 0) {
+      setSelectedIntents(['buy_business']);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleIntent = (id) => {
+    setSelectedIntents(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const derivedRoles = intentsToRoles(selectedIntents);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (selectedIntents.length === 0) {
+      setError('Please select at least one option below.');
+      return;
+    }
+
     setLoading(true);
+    const roles = derivedRoles;
+    const primaryRole = roles[0]; // first role for backward compat
+
     const { data, error: authError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
-        data: { full_name: form.full_name, role: form.role, phone: form.phone },
+        data: {
+          full_name: form.full_name,
+          phone: form.phone,
+          role: primaryRole,   // backward compat for trigger
+          roles: roles,        // new: full roles array
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
@@ -37,11 +69,7 @@ function SignupForm() {
     if (data?.user) {
       if (data.session) {
         // Email confirmation is OFF, user is already logged in
-        const role = form.role;
-        if (role === 'admin') router.push('/admin');
-        else if (role === 'advisor') router.push('/advisor');
-        else if (role === 'seller') router.push('/seller');
-        else router.push('/buyer');
+        router.push(getDashboardPath(roles));
       } else {
         setSuccess(true);
       }
@@ -66,7 +94,7 @@ function SignupForm() {
 
   return (
     <div className={styles.authPage}>
-      <div className={styles.authCard}>
+      <div className={styles.authCard} style={{ maxWidth: 520 }}>
         <div className={styles.authHeader}>
           <Link href="/" className={styles.authLogo}>
             <svg width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="var(--primary)"/><path d="M8 16C8 11.582 11.582 8 16 8C20.418 8 24 11.582 24 16C24 20.418 20.418 24 16 24" stroke="white" strokeWidth="2.5" strokeLinecap="round"/><path d="M16 24C16 21.791 14.209 20 12 20" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
@@ -76,14 +104,61 @@ function SignupForm() {
         </div>
         {error && <div className={styles.authError}>{error}</div>}
         <form onSubmit={handleSubmit} className={styles.authForm}>
-          <div className={styles.roleToggle}>
-            <button type="button" className={`${styles.roleBtn} ${form.role === 'buyer' ? styles.roleBtnActive : ''}`} onClick={() => setForm(f => ({ ...f, role: 'buyer' }))}>
-              🔍 I'm a Buyer
-            </button>
-            <button type="button" className={`${styles.roleBtn} ${form.role === 'seller' ? styles.roleBtnActive : ''}`} onClick={() => setForm(f => ({ ...f, role: 'seller' }))}>
-              🏢 I'm a Seller
-            </button>
+          {/* Intent Selection */}
+          <div style={{ marginBottom: 'var(--space-6)' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '15px',
+              fontWeight: 700,
+              marginBottom: 'var(--space-3)',
+              color: 'var(--text-primary)',
+            }}>
+              What are you here to do?
+              <span style={{ color: 'var(--text-tertiary)', fontWeight: 400, fontSize: '13px', marginLeft: 6 }}>
+                Select all that apply
+              </span>
+            </label>
+            <div className={styles.intentGrid}>
+              {SIGNUP_INTENTS.map(intent => {
+                const isSelected = selectedIntents.includes(intent.id);
+                return (
+                  <button
+                    key={intent.id}
+                    type="button"
+                    className={`${styles.intentCard} ${isSelected ? styles.intentCardActive : ''}`}
+                    onClick={() => toggleIntent(intent.id)}
+                  >
+                    <span className={styles.intentIcon}>{intent.icon}</span>
+                    <span className={styles.intentLabel}>{intent.label}</span>
+                    {isSelected && (
+                      <span className={styles.intentCheck}>✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {derivedRoles.length > 0 && (
+              <div style={{
+                marginTop: 'var(--space-3)',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '4px',
+                alignItems: 'center',
+              }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: 600 }}>Capabilities:</span>
+                {derivedRoles.map(r => (
+                  <span
+                    key={r}
+                    className="badge badge-primary"
+                    style={{ fontSize: '10px', padding: '2px 8px', textTransform: 'capitalize' }}
+                  >
+                    {ROLE_LABELS[r]}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
+
           <div className="form-group">
             <label className="form-label">Full Name <span className="required">*</span></label>
             <input type="text" className="form-input" value={form.full_name} onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))} placeholder="John Smith" required />
@@ -114,7 +189,10 @@ function SignupForm() {
         <button 
           onClick={async () => {
             const redirectUrl = new URL(`${window.location.origin}/auth/callback`);
-            if (form.role) redirectUrl.searchParams.set('role', form.role);
+            // Pass roles as comma-separated for OAuth redirect
+            if (derivedRoles.length > 0) {
+              redirectUrl.searchParams.set('roles', derivedRoles.join(','));
+            }
             await supabase.auth.signInWithOAuth({
               provider: 'google',
               options: { redirectTo: redirectUrl.toString() }
@@ -133,28 +211,6 @@ function SignupForm() {
         </button>
         <div className={styles.authFooter}>
           <p>Already have an account? <Link href="/login" className={styles.authLink}>Sign in</Link></p>
-        </div>
-      </div>
-
-      {/* Buyer Section */}
-      <div className={styles.buyerSection}>
-        <div className={styles.buyerCard}>
-          <div>
-            <span className={styles.buyerLabel}>For Buyers</span>
-            <h2 className={styles.buyerTitle}>Browse and Inquire for Free</h2>
-            <p className={styles.buyerDesc}>Creating a buyer profile and browsing listings is completely free. Get matched with businesses that fit your criteria automatically.</p>
-            <ul className={styles.buyerList}>
-              <li>✅ Free buyer profile</li>
-              <li>✅ Unlimited listing browsing</li>
-              <li>✅ Automatic match notifications</li>
-              <li>✅ Save up to 50 listings</li>
-              <li>✅ Direct seller inquiries</li>
-            </ul>
-          </div>
-          <div className={styles.buyerCtas}>
-            <button className="btn btn-primary btn-lg" onClick={() => setForm(f => ({ ...f, role: 'buyer' }))}>Create Buyer Profile</button>
-            <Link href="/listings" className="btn btn-secondary btn-lg">Browse Listings</Link>
-          </div>
         </div>
       </div>
     </div>

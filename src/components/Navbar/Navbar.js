@@ -3,10 +3,11 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { getDashboardPath, getAccessiblePortals, PORTAL_LABELS, ROLE_LABELS } from '@/lib/roles';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
-  const { user, userRole } = useAuth();
+  const { user, userRoles } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [buyDropdownOpen, setBuyDropdownOpen] = useState(false);
@@ -47,13 +48,9 @@ export default function Navbar() {
     }
   };
 
-  const getDashboardLink = () => {
-    if (userRole === 'admin') return '/admin';
-    if (userRole === 'advisor') return '/advisor';
-    if (userRole === 'seller') return '/seller';
-    if (userRole === 'broker') return '/broker';
-    return '/buyer';
-  };
+  const dashboardLink = getDashboardPath(userRoles);
+  const accessiblePortals = getAccessiblePortals(userRoles);
+  const showPortalSwitcher = accessiblePortals.length > 1;
 
   const isHome = pathname === '/';
   
@@ -103,7 +100,7 @@ export default function Navbar() {
               )}
             </div>
             <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
-            <Link href="/signup?role=seller" className={`${styles.navLink}`} onClick={() => setMenuOpen(false)}>Sell</Link>
+            <Link href="/signup" className={`${styles.navLink}`} onClick={() => setMenuOpen(false)}>Sell</Link>
             <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
             <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
           </nav>
@@ -125,12 +122,46 @@ export default function Navbar() {
                     <div className={styles.dropdownHeader}>
                       <div className={styles.dropdownName}>{user.user_metadata?.full_name || user.email}</div>
                       <div className={styles.dropdownEmail}>{user.email}</div>
-                      {userRole && <span className={`badge badge-primary ${styles.dropdownBadge}`}>{userRole}</span>}
+                      {/* Show role badges */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                        {userRoles.map(r => (
+                          <span key={r} className={`badge badge-primary ${styles.dropdownBadge}`} style={{ fontSize: '10px' }}>
+                            {ROLE_LABELS[r] || r}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                     <div className={styles.dropdownDivider}></div>
-                    <Link href={getDashboardLink()} className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Dashboard</Link>
-                    {userRole === 'seller' && <Link href="/seller/listings/new" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Create Listing</Link>}
-                    {userRole === 'buyer' && <Link href="/buyer/profile" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Buyer Profile</Link>}
+
+                    {/* Portal Switcher */}
+                    {showPortalSwitcher ? (
+                      <>
+                        <div style={{ padding: '6px 14px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>
+                          Your Portals
+                        </div>
+                        {accessiblePortals.map(portal => (
+                          <Link
+                            key={portal}
+                            href={`/${portal}`}
+                            className={styles.dropdownItem}
+                            onClick={() => setDropdownOpen(false)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                          >
+                            <span style={{ fontSize: '14px' }}>
+                              {portal === 'admin' ? '🛡️' : portal === 'seller' ? '🏢' : portal === 'buyer' ? '🔍' : portal === 'advisor' ? '💼' : '📊'}
+                            </span>
+                            {PORTAL_LABELS[portal]}
+                          </Link>
+                        ))}
+                        <div className={styles.dropdownDivider}></div>
+                      </>
+                    ) : (
+                      <Link href={dashboardLink} className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Dashboard</Link>
+                    )}
+
+                    {/* Contextual quick actions */}
+                    {userRoles.includes('seller') && <Link href="/seller/listings/new" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Create Listing</Link>}
+                    {userRoles.includes('buyer') && <Link href="/buyer/profile" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Buyer Profile</Link>}
                     <Link href="/settings" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>Settings</Link>
                     <div className={styles.dropdownDivider}></div>
                     <button className={styles.dropdownItem} onClick={handleLogout}>Sign Out</button>
@@ -168,7 +199,7 @@ export default function Navbar() {
           )}
         </div>
         <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
-        <Link href="/signup?role=seller" className={styles.navLink} onClick={() => setMenuOpen(false)}>Sell</Link>
+        <Link href="/signup" className={styles.navLink} onClick={() => setMenuOpen(false)}>Sell</Link>
         <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
         <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
         {!user ? (

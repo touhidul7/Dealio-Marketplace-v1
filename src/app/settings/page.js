@@ -285,7 +285,7 @@ function TwoFactorSection() {
 
 // ─── Main Settings Page ───────────────────────────────────────────
 function SettingsContent() {
-  const { user, userRole, loading: authLoading } = useAuth();
+  const { user, userRoles, userRole, loading: authLoading } = useAuth();
   const supabase = createClient();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -303,17 +303,19 @@ function SettingsContent() {
     if (!user) return;
     const fetchProfile = async () => {
       const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).single();
-      
+      const roles = userRoles?.length ? userRoles : [userRole];
+
       let companyName = '';
-      if (userRole === 'buyer') {
-        const { data } = await supabase.from('buyer_profiles').select('company_name').eq('user_id', user.id).single();
-        if (data) companyName = data.company_name;
-      } else if (userRole === 'seller') {
+      // Fetch the most relevant profile based on roles (priority: seller > broker > buyer)
+      if (roles.includes('seller') || roles.includes('business_owner')) {
         const { data } = await supabase.from('seller_profiles').select('business_name').eq('user_id', user.id).single();
         if (data) companyName = data.business_name;
-      } else if (userRole === 'broker') {
+      } else if (roles.includes('broker')) {
         const { data } = await supabase.from('broker_profiles').select('brokerage_name').eq('user_id', user.id).single();
         if (data) companyName = data.brokerage_name;
+      } else if (roles.some(r => ['buyer', 'operator', 'strategic_partner'].includes(r))) {
+        const { data } = await supabase.from('buyer_profiles').select('company_name').eq('user_id', user.id).single();
+        if (data) companyName = data.company_name;
       }
 
       if (userData) {
@@ -326,7 +328,7 @@ function SettingsContent() {
       setLoading(false);
     };
     fetchProfile();
-  }, [user, userRole, supabase]);
+  }, [user, userRoles, userRole, supabase]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -342,24 +344,26 @@ function SettingsContent() {
       })
       .eq('id', user.id);
 
+    const roles = userRoles?.length ? userRoles : [userRole];
     let profileError = null;
     if (!userError) {
-      if (userRole === 'buyer') {
-        const { data, error } = await supabase.from('buyer_profiles').update({ company_name: formData.company_name, updated_at: new Date().toISOString() }).eq('user_id', user.id).select();
-        if (!error && (!data || data.length === 0)) {
-          const { error: insertErr } = await supabase.from('buyer_profiles').insert({ user_id: user.id, company_name: formData.company_name });
-          profileError = insertErr;
-        } else { profileError = error; }
-      } else if (userRole === 'seller') {
+      // Update the most relevant profile based on roles (priority: seller > broker > buyer)
+      if (roles.includes('seller') || roles.includes('business_owner')) {
         const { data, error } = await supabase.from('seller_profiles').update({ business_name: formData.company_name, updated_at: new Date().toISOString() }).eq('user_id', user.id).select();
         if (!error && (!data || data.length === 0)) {
           const { error: insertErr } = await supabase.from('seller_profiles').insert({ user_id: user.id, business_name: formData.company_name });
           profileError = insertErr;
         } else { profileError = error; }
-      } else if (userRole === 'broker') {
+      } else if (roles.includes('broker')) {
         const { data, error } = await supabase.from('broker_profiles').update({ brokerage_name: formData.company_name, updated_at: new Date().toISOString() }).eq('user_id', user.id).select();
         if (!error && (!data || data.length === 0)) {
           const { error: insertErr } = await supabase.from('broker_profiles').insert({ user_id: user.id, brokerage_name: formData.company_name });
+          profileError = insertErr;
+        } else { profileError = error; }
+      } else if (roles.some(r => ['buyer', 'operator', 'strategic_partner'].includes(r))) {
+        const { data, error } = await supabase.from('buyer_profiles').update({ company_name: formData.company_name, updated_at: new Date().toISOString() }).eq('user_id', user.id).select();
+        if (!error && (!data || data.length === 0)) {
+          const { error: insertErr } = await supabase.from('buyer_profiles').insert({ user_id: user.id, company_name: formData.company_name });
           profileError = insertErr;
         } else { profileError = error; }
       }
@@ -376,9 +380,17 @@ function SettingsContent() {
     setSaving(false);
   };
 
+  // Determine portal for DashLayout: use primary role mapped to portal
+  const roles = userRoles?.length ? userRoles : [userRole || 'buyer'];
+  const portalRole = roles.includes('admin') ? 'admin'
+    : roles.includes('advisor') ? 'advisor'
+    : roles.includes('broker') ? 'broker'
+    : (roles.includes('seller') || roles.includes('business_owner')) ? 'seller'
+    : 'buyer';
+
   if (authLoading || loading) {
     return (
-      <DashLayout role={userRole || 'buyer'}>
+      <DashLayout role={portalRole}>
         <div style={{ padding: 80, textAlign: 'center' }}>Loading settings...</div>
       </DashLayout>
     );
@@ -405,7 +417,7 @@ function SettingsContent() {
   ];
 
   return (
-    <DashLayout role={userRole}>
+    <DashLayout role={portalRole}>
       <div style={{ maxWidth: 620, margin: '0 auto', padding: '40px 24px' }}>
         <div style={{ marginBottom: 32 }}>
           <h1 className="page-title">Account Settings</h1>

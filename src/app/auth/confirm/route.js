@@ -16,14 +16,22 @@ export async function GET(request) {
         return NextResponse.redirect(`${origin}/update-password`);
       }
 
-      // Email confirmation (signup) → route by role
+      // Email confirmation (signup) → route by roles array
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
-        if (profile?.role === 'seller') return NextResponse.redirect(`${origin}/seller`);
-        if (profile?.role === 'admin') return NextResponse.redirect(`${origin}/admin`);
-        if (profile?.role === 'advisor') return NextResponse.redirect(`${origin}/advisor`);
-        if (profile?.role === 'broker') return NextResponse.redirect(`${origin}/broker`);
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role, roles')
+          .eq('id', user.id)
+          .single();
+
+        const roles = (profile?.roles?.length) ? profile.roles : [profile?.role || 'buyer'];
+
+        // Priority routing
+        if (roles.includes('admin')) return NextResponse.redirect(`${origin}/admin`);
+        if (roles.includes('advisor')) return NextResponse.redirect(`${origin}/advisor`);
+        if (roles.includes('broker')) return NextResponse.redirect(`${origin}/broker`);
+        if (roles.includes('seller') || roles.includes('business_owner')) return NextResponse.redirect(`${origin}/seller`);
         return NextResponse.redirect(`${origin}/buyer`);
       }
     }

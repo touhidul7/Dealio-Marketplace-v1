@@ -111,10 +111,13 @@ function MFAVerifyForm() {
       } else {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
-          if (profile?.role === 'admin') router.push('/admin');
-          else if (profile?.role === 'advisor') router.push('/advisor');
-          else if (profile?.role === 'seller') router.push('/seller');
+          const { data: profile } = await supabase.from('users').select('role, roles').eq('id', user.id).single();
+          const roles = (profile?.roles?.length) ? profile.roles : [profile?.role || 'buyer'];
+          // Priority routing
+          if (roles.includes('admin')) router.push('/admin');
+          else if (roles.includes('advisor')) router.push('/advisor');
+          else if (roles.includes('broker')) router.push('/broker');
+          else if (roles.includes('seller') || roles.includes('business_owner')) router.push('/seller');
           else router.push('/buyer');
         } else {
           router.push('/');

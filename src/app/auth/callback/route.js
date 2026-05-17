@@ -10,7 +10,7 @@ export async function GET(request) {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Check if this is a password recovery flow via AMR (Authentication Methods Reference)
+      // Check if this is a password recovery flow via AMR
       const isRecovery = data?.session?.amr?.some(entry => entry.method === 'recovery');
       if (isRecovery || next === '/update-password') {
         return NextResponse.redirect(`${origin}/update-password`);
@@ -21,19 +21,34 @@ export async function GET(request) {
         return NextResponse.redirect(`${origin}${next}`);
       }
 
-      // Otherwise route by role
-      const requestedRole = searchParams.get('role');
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        if (requestedRole && ['buyer', 'seller'].includes(requestedRole)) {
-          await supabase.from('users').update({ role: requestedRole }).eq('id', user.id);
+        // Handle OAuth signup: apply roles passed via query param
+        const requestedRoles = searchParams.get('roles');
+        if (requestedRoles) {
+          const rolesArray = requestedRoles.split(',').filter(Boolean);
+          if (rolesArray.length > 0) {
+            await supabase.from('users').update({
+              role: rolesArray[0],
+              roles: rolesArray,
+            }).eq('id', user.id);
+          }
         }
-        
-        const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
-        if (profile?.role === 'seller') return NextResponse.redirect(`${origin}/seller`);
-        if (profile?.role === 'admin') return NextResponse.redirect(`${origin}/admin`);
-        if (profile?.role === 'advisor') return NextResponse.redirect(`${origin}/advisor`);
-        if (profile?.role === 'broker') return NextResponse.redirect(`${origin}/broker`);
+
+        // Route by primary role
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role, roles')
+          .eq('id', user.id)
+          .single();
+
+        const roles = (profile?.roles?.length) ? profile.roles : [profile?.role || 'buyer'];
+
+        // Priority routing: admin > advisor > broker > seller/business_owner > buyer
+        if (roles.includes('admin')) return NextResponse.redirect(`${origin}/admin`);
+        if (roles.includes('advisor')) return NextResponse.redirect(`${origin}/advisor`);
+        if (roles.includes('broker')) return NextResponse.redirect(`${origin}/broker`);
+        if (roles.includes('seller') || roles.includes('business_owner')) return NextResponse.redirect(`${origin}/seller`);
         return NextResponse.redirect(`${origin}/buyer`);
       }
       return NextResponse.redirect(`${origin}/`);

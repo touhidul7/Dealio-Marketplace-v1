@@ -3,10 +3,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
+import { canAccessPortal, getFirstAvailablePortal, PORTAL_LABELS, PORTAL_ROLES, getAccessiblePortals, ROLE_LABELS } from '@/lib/roles';
 import styles from './DashLayout.module.css';
 
 export default function DashLayout({ children, role }) {
-  const { user, userRole, userPlan, loading, supabase } = useAuth();
+  const { user, userRoles, userRole, userPlan, loading, supabase } = useAuth();
   const [sideOpen, setSideOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -35,20 +36,21 @@ export default function DashLayout({ children, role }) {
         
         setMfaChecking(false);
 
-        if (userRole && userRole !== 'admin' && userRole !== role) {
-          router.push(`/${userRole}`);
+        // Multi-role authorization: check if user has ANY role that grants portal access
+        if (userRoles?.length && !canAccessPortal(userRoles, role)) {
+          router.push(getFirstAvailablePortal(userRoles));
         }
       };
 
       checkMfa();
     }
-  }, [user, userRole, loading, role, router, pathname, supabase]);
+  }, [user, userRoles, loading, role, router, pathname, supabase]);
 
   if (loading || !user || mfaChecking) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
   }
 
-  const isAuthorized = !userRole || userRole === 'admin' || userRole === role;
+  const isAuthorized = !userRoles?.length || canAccessPortal(userRoles, role);
 
   if (!isAuthorized) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div className="spinner"></div></div>;
@@ -112,7 +114,11 @@ export default function DashLayout({ children, role }) {
   };
 
   const items = navItems[role] || [];
-  const roleLabels = { seller: 'Seller Portal', buyer: 'Buyer Portal', admin: 'Admin Console', advisor: 'Advisor Portal', broker: 'Broker Portal' };
+  const roleLabels = PORTAL_LABELS;
+
+  // Get all portals this user can access (for the portal switcher)
+  const accessiblePortals = getAccessiblePortals(userRoles);
+  const showPortalSwitcher = accessiblePortals.length > 1;
 
   const handleLogout = async () => {
     try {
@@ -147,6 +153,46 @@ export default function DashLayout({ children, role }) {
           </Link>
           <span className={styles.portalLabel}>{roleLabels[role]}</span>
         </div>
+
+        {/* Portal Switcher */}
+        {showPortalSwitcher && (
+          <div className={styles.portalSwitcher || ''} style={{
+            padding: '0 var(--space-3)',
+            marginBottom: 'var(--space-2)',
+          }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.06)',
+              borderRadius: 10,
+              padding: '6px',
+              display: 'flex',
+              gap: '4px',
+              flexWrap: 'wrap',
+            }}>
+              {accessiblePortals.filter(p => p !== 'admin' || userRoles.includes('admin')).map(portal => (
+                <Link
+                  key={portal}
+                  href={`/${portal}`}
+                  style={{
+                    flex: '1 1 auto',
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
+                    background: portal === role ? 'var(--primary)' : 'transparent',
+                    color: portal === role ? '#fff' : 'rgba(255,255,255,0.5)',
+                  }}
+                  onClick={() => setSideOpen(false)}
+                >
+                  {portal.charAt(0).toUpperCase() + portal.slice(1)}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         <nav className={styles.nav}>
           {items.map(item => (
             <Link key={item.href} href={item.href} className={`${styles.navItem} ${pathname === item.href ? styles.navActive : ''}`} onClick={() => setSideOpen(false)}>
@@ -161,8 +207,16 @@ export default function DashLayout({ children, role }) {
             <div>
               <div className={styles.userName}>{user?.user_metadata?.full_name || 'User'}</div>
               <div className={styles.userEmail}>{user?.email}</div>
+              {/* Show role badges */}
+              <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                {userRoles.map(r => (
+                  <span key={r} className="badge badge-primary" style={{ fontSize: '9px', padding: '2px 6px', textTransform: 'capitalize' }}>
+                    {ROLE_LABELS[r] || r}
+                  </span>
+                ))}
+              </div>
               {role === 'seller' && userPlan && (
-                <div style={{ marginTop: '6px' }}>
+                <div style={{ marginTop: '4px' }}>
                   <Link href="/pricing" style={{ textDecoration: 'none' }}>
                     <span className="badge badge-primary" style={{ fontSize: '11px', padding: '3px 8px', textTransform: 'capitalize', cursor: 'pointer' }}>
                       {userPlan} Plan

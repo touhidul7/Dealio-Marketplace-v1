@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-const AuthContext = createContext({ user: null, userRole: null, loading: true });
+const AuthContext = createContext({ user: null, userRoles: [], userRole: null, loading: true });
 
 export function useAuth() {
   return useContext(AuthContext);
@@ -10,14 +10,15 @@ export function useAuth() {
 
 export default function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [userRoles, setUserRoles] = useState([]);
+  const [userRole, setUserRole] = useState(null); // backward compat: primary role
   const [userPlan, setUserPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const fetchingRole = useRef(false);
 
-  const fetchRole = async (userId) => {
-    // Prevent concurrent role fetches
+  const fetchRoles = async (userId) => {
+    // Prevent concurrent fetches
     if (fetchingRole.current) return;
     fetchingRole.current = true;
     try {
@@ -25,19 +26,31 @@ export default function AuthProvider({ children }) {
         setTimeout(() => reject(new Error('Role fetch timeout')), 5000)
       );
       
-      const rolePromise = supabase.from('users').select('role, package_type, package_expiry').eq('id', userId).single();
+      const rolePromise = supabase.from('users').select('role, roles, package_type, package_expiry').eq('id', userId).single();
       const { data: profile } = await Promise.race([rolePromise, timeoutPromise]);
       
       if (profile) {
-        setUserRole(profile.role);
+        // Use roles array if available, fall back to single role
+        const roles = (profile.roles && Array.isArray(profile.roles) && profile.roles.length > 0)
+          ? profile.roles
+          : [profile.role];
+        setUserRoles(roles);
+        setUserRole(profile.role); // keep primary role for backward compat
         const isExpired = profile.package_expiry && new Date(profile.package_expiry) < new Date();
         setUserPlan(isExpired ? 'basic' : (profile.package_type || 'basic'));
       }
     } catch (err) {
-      console.error('Failed to fetch user role:', err);
+      console.error('Failed to fetch user roles:', err);
     } finally {
       fetchingRole.current = false;
     }
+  };
+
+  // Helper: check if user has a specific role
+  const hasRole = (role) => {
+    if (!userRoles?.length) return false;
+    if (userRoles.includes('admin')) return true;
+    return userRoles.includes(role);
   };
 
   useEffect(() => {
@@ -54,7 +67,7 @@ export default function AuthProvider({ children }) {
         
         if (u) {
           setUser(u);
-          await fetchRole(u.id);
+          await fetchRoles(u.id);
         }
       } catch (err) {
         // Ignore lock errors or timeouts on initial load — the onAuthStateChange will recover
@@ -71,12 +84,13 @@ export default function AuthProvider({ children }) {
       async (event, session) => {
         if (session?.user) {
           setUser(session.user);
-          // Only fetch role if it's a new sign-in or we don't have a role yet
-          if (event === 'SIGNED_IN' || !userRole) {
-            await fetchRole(session.user.id);
+          // Only fetch roles if it's a new sign-in or we don't have roles yet
+          if (event === 'SIGNED_IN' || !userRoles.length) {
+            await fetchRoles(session.user.id);
           }
         } else {
           setUser(null);
+          setUserRoles([]);
           setUserRole(null);
         }
         setLoading(false);
@@ -87,7 +101,7 @@ export default function AuthProvider({ children }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <AuthContext.Provider value={{ user, userRole, userPlan, loading, supabase }}>
+    <AuthContext.Provider value={{ user, userRoles, userRole, userPlan, hasRole, loading, supabase }}>
       {children}
     </AuthContext.Provider>
   );
