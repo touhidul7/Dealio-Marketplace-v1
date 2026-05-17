@@ -163,8 +163,11 @@ function MFAVerifyForm() {
               onKeyDown={e => handleKeyDown(i, e)}
               onPaste={i === 0 ? handlePaste : undefined}
               style={{
-                width: '48px',
+                width: '100%',
+                maxWidth: '48px',
                 height: '56px',
+                flex: '1 1 0px',
+                minWidth: 0,
                 textAlign: 'center',
                 fontSize: '24px',
                 fontWeight: '700',

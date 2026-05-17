@@ -190,18 +190,13 @@ export default function AdminUsersPage() {
                         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{u.email}</span>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                          {roles.map((r, i) => (
-                            <span
-                              key={r}
-                              className={`badge ${PORTAL_ROLE_COLOR[r] || 'badge-secondary'}`}
-                              style={{ textTransform: 'capitalize', fontSize: 11 }}
-                            >
-                              {i === 0 && roles.length > 1 && <span style={{ opacity: 0.6, marginRight: 2 }}>★</span>}
-                              {ROLE_LABELS[r] || r}
-                            </span>
-                          ))}
-                        </div>
+                        {roles.includes('admin') ? (
+                          <span className="badge badge-warning" style={{ fontSize: 11 }}>Admin</span>
+                        ) : roles.includes('advisor') ? (
+                          <span className="badge badge-accent" style={{ fontSize: 11 }}>Advisor</span>
+                        ) : (
+                          <span className="badge badge-secondary" style={{ fontSize: 11 }}>User</span>
+                        )}
                       </td>
                       <td style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{timeAgo(u.created_at)}</td>
                       <td>

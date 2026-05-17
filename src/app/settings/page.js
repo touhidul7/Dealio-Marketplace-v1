@@ -394,13 +394,18 @@ function SettingsContent() {
       return;
     }
 
-    // Prevent non-admins from adding admin role
+    // Prevent non-admins from adding protected roles
+    const PROTECTED_ROLES = ['admin', 'advisor'];
     let finalRoles = [...selectedRoles];
-    if (userRoles.includes('admin') && !finalRoles.includes('admin')) {
-        finalRoles.push('admin');
-    } else if (!userRoles.includes('admin')) {
-        finalRoles = finalRoles.filter(r => r !== 'admin');
-    }
+    
+    PROTECTED_ROLES.forEach(protectedRole => {
+      if (userRoles.includes(protectedRole) && !finalRoles.includes(protectedRole)) {
+        finalRoles.push(protectedRole);
+      } else if (!userRoles.includes(protectedRole)) {
+        finalRoles = finalRoles.filter(r => r !== protectedRole);
+      }
+    });
+
     const primaryRole = finalRoles[0];
 
     const { error } = await supabase
@@ -552,7 +557,7 @@ function SettingsContent() {
                 </p>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {ALL_ROLES.filter(r => r !== 'admin').map(role => {
+                  {ALL_ROLES.filter(r => !['admin', 'advisor'].includes(r)).map(role => {
                     const isChecked = selectedRoles.includes(role);
                     const isPrimary = selectedRoles[0] === role;
                     return (

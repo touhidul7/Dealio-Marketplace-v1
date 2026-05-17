@@ -79,13 +79,6 @@ export const SIGNUP_INTENTS = [
     roles: ['buyer'],
   },
   {
-    id: 'advise_clients',
-    label: 'Advise clients',
-    description: 'Provide M&A advisory services',
-    icon: '💼',
-    roles: ['advisor'],
-  },
-  {
     id: 'broker_transactions',
     label: 'Broker transactions',
     description: 'Broker business deals',
