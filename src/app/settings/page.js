@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import DashLayout from '@/components/DashLayout/DashLayout';
+import { ALL_ROLES, ROLE_LABELS } from '@/lib/roles';
 
 // ─── 2FA Security Section ─────────────────────────────────────────
 function TwoFactorSection() {
@@ -298,6 +299,7 @@ function SettingsContent() {
     company_name: '',
     phone: '',
   });
+  const [selectedRoles, setSelectedRoles] = useState([]);
 
   useEffect(() => {
     if (!user) return;
@@ -324,6 +326,7 @@ function SettingsContent() {
           company_name: companyName || '',
           phone: userData.phone || '',
         });
+        setSelectedRoles(roles);
       }
       setLoading(false);
     };
@@ -380,6 +383,44 @@ function SettingsContent() {
     setSaving(false);
   };
 
+  const handleRolesSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage('');
+    
+    if (selectedRoles.length === 0) {
+      setMessage('You must select at least one capability.');
+      setSaving(false);
+      return;
+    }
+
+    // Prevent non-admins from adding admin role
+    let finalRoles = [...selectedRoles];
+    if (userRoles.includes('admin') && !finalRoles.includes('admin')) {
+        finalRoles.push('admin');
+    } else if (!userRoles.includes('admin')) {
+        finalRoles = finalRoles.filter(r => r !== 'admin');
+    }
+    const primaryRole = finalRoles[0];
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        roles: finalRoles,
+        role: primaryRole,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+      
+    if (!error) {
+      setMessage('Capabilities updated successfully! Note: Navigation changes will apply on your next login.');
+    } else {
+      console.error("Roles update error:", error);
+      setMessage(`Failed to update capabilities: ${error?.message || 'Please try again.'}`);
+    }
+    setSaving(false);
+  };
+
   // Determine portal for DashLayout: use primary role mapped to portal
   const roles = userRoles?.length ? userRoles : [userRole || 'buyer'];
   const portalRole = roles.includes('admin') ? 'admin'
@@ -413,6 +454,7 @@ function SettingsContent() {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'capabilities', label: 'Capabilities', icon: '⚙️' },
     { id: 'security', label: 'Security', icon: '🔐' },
   ];
 
@@ -496,6 +538,91 @@ function SettingsContent() {
         {activeTab === 'security' && (
           <div className="card" style={{ padding: 'var(--space-6)' }}>
             <TwoFactorSection />
+          </div>
+        )}
+
+        {/* Capabilities Tab */}
+        {activeTab === 'capabilities' && (
+          <div className="card" style={{ padding: 'var(--space-6)' }}>
+            <form onSubmit={handleRolesSubmit}>
+              <div style={{ marginBottom: 20 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Your Capabilities</h3>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>
+                  Select what you are here to do on Dealio. This changes which portals and tools you have access to.
+                </p>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {ALL_ROLES.filter(r => r !== 'admin').map(role => {
+                    const isChecked = selectedRoles.includes(role);
+                    const isPrimary = selectedRoles[0] === role;
+                    return (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => {
+                          setSelectedRoles(prev =>
+                            prev.includes(role)
+                              ? prev.filter(r => r !== role)
+                              : [...prev, role]
+                          );
+                        }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+                          border: `2px solid ${isChecked ? 'var(--primary)' : 'var(--border)'}`,
+                          background: isChecked ? 'var(--primary-50)' : 'var(--bg)',
+                          transition: 'all 0.15s ease',
+                          position: 'relative',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <span style={{
+                          width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                          border: `2px solid ${isChecked ? 'var(--primary)' : 'var(--border)'}`,
+                          background: isChecked ? 'var(--primary)' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 12, color: '#fff', fontWeight: 800,
+                        }}>
+                          {isChecked ? '✓' : ''}
+                        </span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: isChecked ? 'var(--primary)' : 'var(--text-secondary)' }}>
+                          {ROLE_LABELS[role]}
+                        </span>
+                        {isPrimary && isChecked && (
+                          <span style={{
+                            position: 'absolute', top: 6, right: 8,
+                            fontSize: 10, fontWeight: 700, color: 'var(--primary)',
+                            textTransform: 'uppercase', letterSpacing: '0.04em',
+                          }}>Primary</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedRoles.length > 1 && (
+                  <div style={{
+                    fontSize: 13, color: 'var(--text-tertiary)',
+                    background: 'var(--bg-secondary)', borderRadius: 8,
+                    padding: '10px 14px', marginTop: 16,
+                  }}>
+                    💡 Primary capability (first checked) determines your default dashboard: <strong>{ROLE_LABELS[selectedRoles[0]]}</strong>
+                  </div>
+                )}
+              </div>
+
+              {message && (
+                <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 20, fontSize: 14, backgroundColor: message.includes('success') ? '#f0fdf4' : '#fef2f2', color: message.includes('success') ? '#15803d' : '#b91c1c', border: `1px solid ${message.includes('success') ? '#bbf7d0' : '#fecaca'}` }}>
+                  {message}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 32 }}>
+                <button type="button" onClick={() => window.history.back()} className="btn btn-secondary">Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={saving || selectedRoles.length === 0}>
+                  {saving ? 'Saving...' : 'Save Capabilities'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>
