@@ -102,6 +102,7 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+            <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
             <Link href="/signup?role=seller" className={`${styles.navLink}`} onClick={() => setMenuOpen(false)}>Sell</Link>
             <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
             <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
@@ -166,6 +167,7 @@ export default function Navbar() {
             </div>
           )}
         </div>
+        <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
         <Link href="/signup?role=seller" className={styles.navLink} onClick={() => setMenuOpen(false)}>Sell</Link>
         <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
         <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
