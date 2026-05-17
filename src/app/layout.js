@@ -4,6 +4,7 @@ import Footer from '@/components/Footer/Footer';
 import AuthProvider from '@/components/AuthProvider';
 import MainLayoutWrapper from '@/components/MainLayoutWrapper';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata = {
   title: 'Dealio Marketplace – Buy & Sell Businesses',
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
           <Footer />
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
