@@ -35,7 +35,7 @@ export default function ContactPage() {
     <div style={{ minHeight: '100vh', background: 'var(--surface)' }}>
       {/* Hero Section */}
       <div style={{ 
-        background: 'linear-gradient(135deg, var(--primary-900) 0%, var(--primary-800) 100%)', 
+        background: 'linear-gradient(135deg, var(--gray-900), var(--primary-900))', 
         color: 'white', 
         padding: '100px 20px',
         textAlign: 'center',
