@@ -14,11 +14,11 @@ function getAppRoutes(dir, basePath = '') {
     for (const entry of entries) {
       if (entry.isDirectory()) {
         const excludedDirs = [
-          'api', 'admin', 'advisor', 'broker', 'buyer', 'seller', 
-          'settings', 'saved', 'checkout', 'update-password', 
+          'api', 'admin', 'advisor', 'broker', 'buyer', 'seller',
+          'settings', 'saved', 'checkout', 'update-password',
           'auth', 'forgot-password', 'login', 'signup', '(seo)'
         ];
-        
+
         if (!excludedDirs.includes(entry.name) && !entry.name.startsWith('[') && !entry.name.startsWith('(')) {
           routes.push(...getAppRoutes(path.join(dir, entry.name), `${basePath}/${entry.name}`));
         }
@@ -33,12 +33,12 @@ function getAppRoutes(dir, basePath = '') {
 }
 
 export default async function sitemap() {
-  const baseUrl = 'https://dealiomarketplace.com';
+  const baseUrl = 'https://www.dealiomarketplace.com';
 
   // Base routes - Dynamic
   const appDir = path.join(process.cwd(), 'src/app');
   const dynamicRoutes = getAppRoutes(appDir).filter(route => route !== '/requests/new');
-  
+
   const routes = dynamicRoutes.map((route) => ({
     url: `${baseUrl}${route === '/' ? '' : route}`,
     lastModified: new Date().toISOString(),
@@ -61,13 +61,13 @@ export default async function sitemap() {
   let requestRoutes = [];
   try {
     const supabase = createAdminClient();
-    
+
     // Fetch blogs
     const { data: blogs, error: blogError } = await supabase
       .from('blogs')
       .select('slug, created_at')
       .eq('published', true);
-      
+
     if (!blogError && blogs) {
       blogRoutes = blogs.map((blog) => ({
         url: `${baseUrl}/blog/${blog.slug}`,
@@ -82,7 +82,7 @@ export default async function sitemap() {
       .from('requests')
       .select('id, created_at')
       .eq('status', 'approved');
-      
+
     if (!reqError && requestsData) {
       requestRoutes = requestsData.map((req) => ({
         url: `${baseUrl}/requests/${req.id}`,
