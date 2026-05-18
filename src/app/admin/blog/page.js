@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false, loading: () => <p>Loading editor...</p> });
 
 export default function AdminBlogPage() {
+  const { user } = useAuth();
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -81,9 +83,9 @@ export default function AdminBlogPage() {
     setForm({ ...form, cover_image: '' });
   };
 
-  const uploadCoverImage = async (file) => {
+  const uploadCoverImage = async (file, userId) => {
     const ext = file.name.split('.').pop();
-    const path = `blog-covers/${Date.now()}.${ext}`;
+    const path = `${userId}/blog-covers-${Date.now()}.${ext}`;
     const { data, error } = await supabase.storage.from('listing-images').upload(path, file);
     if (error) throw new Error('Image upload failed: ' + error.message);
     const { data: { publicUrl } } = supabase.storage.from('listing-images').getPublicUrl(path);
@@ -101,7 +103,7 @@ export default function AdminBlogPage() {
       // Upload new cover image if a file was selected
       if (coverFile) {
         setUploading(true);
-        coverImageUrl = await uploadCoverImage(coverFile);
+        coverImageUrl = await uploadCoverImage(coverFile, user?.id || 'admin');
         setUploading(false);
       }
 

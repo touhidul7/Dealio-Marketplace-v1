@@ -3,6 +3,9 @@ import path from 'path';
 import seoPages from '@/lib/seo/seo-pages';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 function getAppRoutes(dir, basePath = '') {
   let routes = [];
   try {
