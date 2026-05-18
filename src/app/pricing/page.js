@@ -144,6 +144,16 @@ export default async function PricingPage({ searchParams }) {
           </div>
         </div>
 
+        {/* Valuation CTA */}
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '40px', textAlign: 'center', margin: '40px 0' }}>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '15px', color: '#0F172A' }}>Not sure what your business is worth?</h2>
+          <p style={{ color: '#475569', fontSize: '1.1rem', marginBottom: '25px', maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto' }}>
+            Use our free Business Valuation Calculator to get a rough estimate of your business's value based on your industry, revenue, and earnings.
+          </p>
+          <Link href="/business-valuation-calculator" className="btn btn-primary btn-lg">
+            Calculate Business Value
+          </Link>
+        </div>
 
         {/* FAQ */}
         <div className={styles.faqSection}>
