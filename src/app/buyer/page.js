@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo } from '@/lib/constants';
+import RequestsPortal from '@/components/RequestsPortal/RequestsPortal';
 import styles from './buyer.module.css';
 
 function computeMatch(listing, profile) {
@@ -46,6 +47,7 @@ export default function BuyerDashboard() {
   const [saved, setSaved] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const supabase = createClient();
@@ -53,14 +55,16 @@ export default function BuyerDashboard() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [{ data: bp }, { data: sv }, { data: inq }] = await Promise.all([
+      const [{ data: bp }, { data: sv }, { data: inq }, { data: userRequests }] = await Promise.all([
         supabase.from('buyer_profiles').select('*').eq('user_id', user.id).single(),
         supabase.from('saved_listings').select('*, listings(id, title, industry, city, province_state, asking_price, featured_image_url, status)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(6),
         supabase.from('inquiries').select('*, listings(title)').eq('buyer_user_id', user.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('requests').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]);
       setProfile(bp);
       setSaved((sv || []).filter(s => s.listings?.status === 'active'));
       setInquiries(inq || []);
+      setMyRequests(userRequests || []);
       if (bp) {
         const { data: listingsData } = await supabase.from('listings').select('id, title, industry, city, province_state, asking_price, featured_image_url').eq('status', 'active');
         if (listingsData) {
@@ -169,6 +173,9 @@ export default function BuyerDashboard() {
           </div>
         )}
       </div>
+
+      {/* ── Requests Portal ── */}
+      <RequestsPortal myRequests={myRequests} portalBase="/buyer" />
     </div>
   );
 }

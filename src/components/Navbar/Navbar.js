@@ -53,13 +53,13 @@ export default function Navbar() {
   const showPortalSwitcher = accessiblePortals.length > 1;
 
   const isHome = pathname === '/';
-  
-  const isDashboardRoute = pathname?.startsWith('/seller') || 
-                           pathname?.startsWith('/buyer') || 
-                           pathname?.startsWith('/admin') || 
-                           pathname?.startsWith('/advisor') || 
-                           pathname?.startsWith('/broker') ||
-                           pathname?.startsWith('/settings');
+
+  const isDashboardRoute = pathname?.startsWith('/seller') ||
+    pathname?.startsWith('/buyer') ||
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/advisor') ||
+    pathname?.startsWith('/broker') ||
+    pathname?.startsWith('/settings');
 
   if (isDashboardRoute) return null;
 
@@ -69,28 +69,28 @@ export default function Navbar() {
         <div className={styles.container}>
           <Link href="/" className={styles.logo}>
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="var(--primary)"/>
-              <path d="M8 16C8 11.582 11.582 8 16 8C20.418 8 24 11.582 24 16C24 20.418 20.418 24 16 24" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <path d="M16 24C16 21.791 14.209 20 12 20" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              <rect width="32" height="32" rx="8" fill="var(--primary)" />
+              <path d="M8 16C8 11.582 11.582 8 16 8C20.418 8 24 11.582 24 16C24 20.418 20.418 24 16 24" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M16 24C16 21.791 14.209 20 12 20" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
             <span className={styles.logoText}>Dealio</span>
             <span className={styles.logoBadge}>Marketplace</span>
           </Link>
 
           <nav className={`${styles.navDesktop}`}>
-            <div 
-              className={styles.navDropdownContainer} 
+            <div
+              className={styles.navDropdownContainer}
               ref={buyDropdownRef}
               onMouseEnter={() => { if (window.innerWidth > 768) setBuyDropdownOpen(true); }}
               onMouseLeave={() => { if (window.innerWidth > 768) setBuyDropdownOpen(false); }}
             >
-              <button 
-                className={`${styles.navLink} ${styles.navDropdownBtn} ${(pathname === '/listings' || pathname === '/other-opportunities') ? styles.active : ''}`} 
+              <button
+                className={`${styles.navLink} ${styles.navDropdownBtn} ${(pathname === '/listings' || pathname === '/other-opportunities') ? styles.active : ''}`}
                 onClick={() => setBuyDropdownOpen(!buyDropdownOpen)}
                 aria-expanded={buyDropdownOpen}
               >
                 Buy
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className={styles.dropdownIcon}><path d="M4 6l4 4 4-4"/></svg>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className={styles.dropdownIcon}><path d="M4 6l4 4 4-4" /></svg>
               </button>
               {buyDropdownOpen && (
                 <div className={styles.navDropdown}>
@@ -99,8 +99,8 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-            <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
             <Link href="/signup" className={`${styles.navLink}`} onClick={() => setMenuOpen(false)}>Sell</Link>
+            <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
             <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
             <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
           </nav>
@@ -115,7 +115,7 @@ export default function Navbar() {
               <div className={styles.userMenu} ref={dropdownRef}>
                 <button className={styles.userBtn} onClick={() => setDropdownOpen(!dropdownOpen)}>
                   <div className={styles.avatar}>{user.email?.[0]?.toUpperCase() || 'U'}</div>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 6l4 4 4-4" /></svg>
                 </button>
                 {dropdownOpen && (
                   <div className={styles.dropdown}>
@@ -171,9 +171,9 @@ export default function Navbar() {
             )}
             <button className={styles.menuBtn} onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
               {menuOpen ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
               ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18" /></svg>
               )}
             </button>
           </div>
@@ -183,13 +183,13 @@ export default function Navbar() {
       {/* Mobile nav rendered OUTSIDE header to avoid backdrop-filter containing block */}
       <nav className={`${styles.mobileNav} ${menuOpen ? styles.navOpen : ''}`}>
         <div className={styles.navDropdownContainer} ref={mobileBuyRef}>
-          <button 
+          <button
             className={`${styles.navLink} ${styles.navDropdownBtn} ${(pathname === '/listings' || pathname === '/other-opportunities') ? styles.active : ''}`}
             aria-expanded={buyDropdownOpen}
             onClick={() => setBuyDropdownOpen(!buyDropdownOpen)}
           >
             Buy
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className={styles.dropdownIcon}><path d="M4 6l4 4 4-4"/></svg>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className={styles.dropdownIcon}><path d="M4 6l4 4 4-4" /></svg>
           </button>
           {buyDropdownOpen && (
             <div className={styles.navDropdown}>
@@ -198,8 +198,8 @@ export default function Navbar() {
             </div>
           )}
         </div>
-        <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
         <Link href="/signup" className={styles.navLink} onClick={() => setMenuOpen(false)}>Sell</Link>
+        <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
         <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
         <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
         {!user ? (

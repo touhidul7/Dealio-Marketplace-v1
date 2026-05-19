@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES, PACKAGES } from '@/lib/constants';
+import { REQUEST_TYPES, REQUEST_STATUSES } from '@/lib/requestsConstants';
+import RequestsPortal from '@/components/RequestsPortal/RequestsPortal';
 import styles from './seller.module.css';
 
 export default function SellerDashboard() {
   const [listings, setListings] = useState([]);
   const [inquiries, setInquiries] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userPlan, setUserPlan] = useState('basic');
   const [planExpiry, setPlanExpiry] = useState(null);
@@ -18,15 +21,17 @@ export default function SellerDashboard() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [{ data: l }, { data: i }, { data: profile }] = await Promise.all([
+      const [{ data: l }, { data: i }, { data: profile }, { data: userRequests }] = await Promise.all([
         supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('inquiries').select('*, listings(title)').in('listing_id',
           (await supabase.from('listings').select('id').eq('owner_user_id', user.id)).data?.map(x => x.id) || []
         ).order('created_at', { ascending: false }).limit(10),
         supabase.from('users').select('package_type, package_expiry').eq('id', user.id).single(),
+        supabase.from('requests').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]);
       setListings(l || []);
       setInquiries(i || []);
+      setMyRequests(userRequests || []);
       
       const isExpired = profile?.package_expiry && new Date(profile.package_expiry) < new Date();
       setUserPlan(isExpired ? 'basic' : (profile?.package_type || 'basic'));
@@ -156,6 +161,9 @@ export default function SellerDashboard() {
           </div>
         )}
       </div>
+
+      {/* ── Requests Portal ── */}
+      <RequestsPortal myRequests={myRequests} portalBase="/seller" />
 
       {/* Upsell Panel */}
       <div className={styles.upsellGrid}>

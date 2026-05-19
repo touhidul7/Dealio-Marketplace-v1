@@ -77,7 +77,7 @@ export default function DashLayout({ children, role }) {
       { href: '/seller/inquiries', label: 'Inquiries', icon: '📬' },
       { href: '/seller/services', label: 'Services', icon: '⭐' },
       { href: '/seller/saved', label: 'Saved Listings', icon: '♥' },
-      { href: '/requests', label: 'Requests', icon: '📢' },
+      { href: '/seller/requests', label: 'Requests', icon: '📢' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     buyer: [
@@ -87,7 +87,7 @@ export default function DashLayout({ children, role }) {
       { href: '/buyer/saved', label: 'Saved Listings', icon: '♥' },
       { href: '/buyer/inquiries', label: 'My Inquiries', icon: '📬' },
       { href: '/buyer/services', label: 'Advisory Services', icon: '⭐' },
-      { href: '/requests', label: 'Requests', icon: '📢' },
+      { href: '/buyer/requests', label: 'Requests', icon: '📢' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     broker: [
@@ -98,7 +98,7 @@ export default function DashLayout({ children, role }) {
       { href: '/broker/inquiries', label: 'Inquiries', icon: '📬' },
       { href: '/broker/services', label: 'Services', icon: '⭐' },
       { href: '/broker/saved', label: 'Saved Listings', icon: '♥' },
-      { href: '/requests', label: 'Requests', icon: '📢' },
+      { href: '/broker/requests', label: 'Requests', icon: '📢' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     admin: [
@@ -120,7 +120,7 @@ export default function DashLayout({ children, role }) {
       { href: '/advisor/matches', label: 'Client Matches', icon: '🎯' },
       { href: '/advisor/services', label: 'Service Requests', icon: '⭐' },
       { href: '/advisor/saved', label: 'Saved Listings', icon: '♥' },
-      { href: '/requests', label: 'Requests', icon: '📢' },
+      { href: '/advisor/requests', label: 'Requests', icon: '📢' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
   };
@@ -246,12 +246,15 @@ export default function DashLayout({ children, role }) {
         {/* Portal Switcher was moved to sideHeader */}
 
         <nav className={styles.nav}>
-          {items.map(item => (
-            <Link key={item.href} href={item.href} className={`${styles.navItem} ${pathname === item.href ? styles.navActive : ''}`} onClick={() => setSideOpen(false)}>
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
+          {items.map(item => {
+            const isActive = pathname === item.href || (item.href !== `/${role}` && item.href !== '/settings' && pathname.startsWith(item.href + '/'));
+            return (
+              <Link key={item.href} href={item.href} className={`${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={() => setSideOpen(false)}>
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
         <div className={styles.sideFooter}>
           <div className={styles.userInfo}>

@@ -3,20 +3,24 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
-import { formatCurrency, LISTING_STATUSES, INQUIRY_STATUSES } from '@/lib/constants';
+import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES } from '@/lib/constants';
+import RequestsPortal from '@/components/RequestsPortal/RequestsPortal';
 
 export default function BrokerDashboardPage() {
   const { user } = useAuth();
   const supabase = createClient();
   const [listings, setListings] = useState([]);
   const [inquiries, setInquiries] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchBrokerData = async () => {
-      const { data: myListings } = await supabase
-        .from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false });
+      const [{ data: myListings }, { data: userRequests }] = await Promise.all([
+        supabase.from('listings').select('*').eq('owner_user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('requests').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      ]);
 
       const ids = myListings?.map(l => l.id) || [];
       const { data: myInquiries } = ids.length > 0
@@ -25,6 +29,7 @@ export default function BrokerDashboardPage() {
 
       setListings(myListings || []);
       setInquiries(myInquiries || []);
+      setMyRequests(userRequests || []);
       setLoading(false);
     };
     fetchBrokerData();
@@ -145,6 +150,9 @@ export default function BrokerDashboardPage() {
         </div>
 
       </div>
+
+      {/* ── Requests Portal ── */}
+      <RequestsPortal myRequests={myRequests} portalBase="/broker" />
     </div>
   );
 }
