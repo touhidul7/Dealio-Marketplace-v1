@@ -37,7 +37,7 @@ export async function POST(req) {
     // 3. Send email if it transitioned to 'active'
     if (listing.status !== 'active' && status === 'active' && listing.users?.email && resendKey) {
       await resend.emails.send({
-        from: 'Dealio Marketplace <notifications@brittosoft.site>',
+        from: 'Dealio Marketplace <notifications@dealiomarketplace.com>',
         to: listing.users.email,
         subject: 'Your Dealio Listing is Now Live! 🎉',
         html: `
