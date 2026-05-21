@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES, PACKAGES } from '@/lib/constants';
 import { REQUEST_TYPES, REQUEST_STATUSES } from '@/lib/requestsConstants';
-import RequestsPortal from '@/components/RequestsPortal/RequestsPortal';
 import styles from './seller.module.css';
 
 export default function SellerDashboard() {
@@ -162,8 +161,6 @@ export default function SellerDashboard() {
         )}
       </div>
 
-      {/* ── Requests Portal ── */}
-      <RequestsPortal myRequests={myRequests} portalBase="/seller" />
 
       {/* Upsell Panel */}
       <div className={styles.upsellGrid}>

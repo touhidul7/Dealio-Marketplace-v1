@@ -77,7 +77,6 @@ export default function DashLayout({ children, role }) {
       { href: '/seller/inquiries', label: 'Inquiries', icon: '📬' },
       { href: '/seller/services', label: 'Services', icon: '⭐' },
       { href: '/seller/saved', label: 'Saved Listings', icon: '♥' },
-      { href: '/seller/requests', label: 'Requests', icon: '📢' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     buyer: [
@@ -87,7 +86,6 @@ export default function DashLayout({ children, role }) {
       { href: '/buyer/saved', label: 'Saved Listings', icon: '♥' },
       { href: '/buyer/inquiries', label: 'My Inquiries', icon: '📬' },
       { href: '/buyer/services', label: 'Advisory Services', icon: '⭐' },
-      { href: '/buyer/requests', label: 'Requests', icon: '📢' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     broker: [
@@ -98,7 +96,6 @@ export default function DashLayout({ children, role }) {
       { href: '/broker/inquiries', label: 'Inquiries', icon: '📬' },
       { href: '/broker/services', label: 'Services', icon: '⭐' },
       { href: '/broker/saved', label: 'Saved Listings', icon: '♥' },
-      { href: '/broker/requests', label: 'Requests', icon: '📢' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
     admin: [
@@ -109,7 +106,6 @@ export default function DashLayout({ children, role }) {
       { href: '/admin/purchases', label: 'Purchases', icon: '💳' },
       { href: '/admin/services', label: 'Service Requests', icon: '⭐' },
       { href: '/admin/saved', label: 'Saved Listings', icon: '♥' },
-      { href: '/admin/requests', label: 'Requests', icon: '📢' },
       { href: '/admin/blog', label: 'Blog Posts', icon: '📝' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
@@ -120,7 +116,13 @@ export default function DashLayout({ children, role }) {
       { href: '/advisor/matches', label: 'Client Matches', icon: '🎯' },
       { href: '/advisor/services', label: 'Service Requests', icon: '⭐' },
       { href: '/advisor/saved', label: 'Saved Listings', icon: '♥' },
-      { href: '/advisor/requests', label: 'Requests', icon: '📢' },
+      { href: '/settings', label: 'Settings', icon: '⚙️' },
+    ],
+    network: [
+      { href: '/network', label: 'Dashboard', icon: '📊' },
+      { href: '/network/requests', label: 'My Requests', icon: '📋' },
+      { href: '/network/requests/new', label: 'New Request', icon: '➕' },
+      { href: '/network/browse', label: 'Browse Requests', icon: '🔍' },
       { href: '/settings', label: 'Settings', icon: '⚙️' },
     ],
   };

@@ -59,6 +59,7 @@ export default function Navbar() {
     pathname?.startsWith('/admin') ||
     pathname?.startsWith('/advisor') ||
     pathname?.startsWith('/broker') ||
+    pathname?.startsWith('/network') ||
     pathname?.startsWith('/settings');
 
   if (isDashboardRoute) return null;
@@ -100,7 +101,7 @@ export default function Navbar() {
               )}
             </div>
             <Link href="/signup" className={`${styles.navLink}`} onClick={() => setMenuOpen(false)}>Sell</Link>
-            <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
+            <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Network</Link>
             <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
             <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
           </nav>
@@ -148,7 +149,7 @@ export default function Navbar() {
                             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                           >
                             <span style={{ fontSize: '14px' }}>
-                              {portal === 'admin' ? '🛡️' : portal === 'seller' ? '🏢' : portal === 'buyer' ? '🔍' : portal === 'advisor' ? '💼' : '📊'}
+                              {portal === 'admin' ? '🛡️' : portal === 'seller' ? '🏢' : portal === 'buyer' ? '🔍' : portal === 'network' ? '🌐' : portal === 'advisor' ? '💼' : '📊'}
                             </span>
                             {PORTAL_LABELS[portal]}
                           </Link>
@@ -199,7 +200,7 @@ export default function Navbar() {
           )}
         </div>
         <Link href="/signup" className={styles.navLink} onClick={() => setMenuOpen(false)}>Sell</Link>
-        <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Requests</Link>
+        <Link href="/requests" className={`${styles.navLink} ${pathname?.startsWith('/requests') ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Network</Link>
         <Link href="/pricing" className={`${styles.navLink} ${pathname === '/pricing' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Pricing</Link>
         <Link href="/blog" className={`${styles.navLink} ${pathname === '/blog' ? styles.active : ''}`} onClick={() => setMenuOpen(false)}>Learn</Link>
         {!user ? (

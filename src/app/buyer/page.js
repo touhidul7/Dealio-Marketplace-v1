@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { formatCurrency, timeAgo } from '@/lib/constants';
-import RequestsPortal from '@/components/RequestsPortal/RequestsPortal';
 import styles from './buyer.module.css';
 
 function computeMatch(listing, profile) {
@@ -173,9 +172,6 @@ export default function BuyerDashboard() {
           </div>
         )}
       </div>
-
-      {/* ── Requests Portal ── */}
-      <RequestsPortal myRequests={myRequests} portalBase="/buyer" />
     </div>
   );
 }

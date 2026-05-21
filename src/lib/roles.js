@@ -92,6 +92,7 @@ export const SIGNUP_INTENTS = [
 export const PORTAL_ROLES = {
   buyer: ['buyer', 'operator', 'strategic_partner'],
   seller: ['seller', 'business_owner'],
+  network: ['buyer', 'seller', 'business_owner', 'operator', 'strategic_partner', 'advisor', 'broker', 'admin'],
   advisor: ['advisor'],
   broker: ['broker'],
   admin: ['admin'],
@@ -112,6 +113,7 @@ export const ROLE_TO_PORTAL = {
 export const PORTAL_LABELS = {
   buyer: 'Buyer Portal',
   seller: 'Seller Portal',
+  network: 'Network Portal',
   advisor: 'Advisor Portal',
   broker: 'Broker Portal',
   admin: 'Admin Console',
@@ -172,7 +174,7 @@ export function getFirstAvailablePortal(userRoles) {
   const portals = getAccessiblePortals(userRoles);
   if (portals.length === 0) return '/buyer';
   // Priority order
-  const priority = ['admin', 'advisor', 'broker', 'seller', 'buyer'];
+  const priority = ['admin', 'advisor', 'broker', 'seller', 'buyer', 'network'];
   for (const p of priority) {
     if (portals.includes(p)) return `/${p}`;
   }

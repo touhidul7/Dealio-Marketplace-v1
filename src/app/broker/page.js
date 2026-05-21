@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
 import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES } from '@/lib/constants';
-import RequestsPortal from '@/components/RequestsPortal/RequestsPortal';
 
 export default function BrokerDashboardPage() {
   const { user } = useAuth();
@@ -151,8 +150,7 @@ export default function BrokerDashboardPage() {
 
       </div>
 
-      {/* ── Requests Portal ── */}
-      <RequestsPortal myRequests={myRequests} portalBase="/broker" />
+
     </div>
   );
 }
