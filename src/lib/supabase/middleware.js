@@ -38,13 +38,13 @@ export async function updateSession(request) {
   // User must be logged in to verify their 2FA code.
   const isMfaVerify = pathname.startsWith('/auth/mfa-verify')
 
-  const isProtected = pathname.startsWith('/seller') || 
-                      pathname.startsWith('/admin') || 
-                      pathname.startsWith('/dashboard') ||
-                      pathname.startsWith('/advisor') ||
-                      pathname.startsWith('/buyer') ||
-                      pathname.startsWith('/checkout') ||
-                      pathname.startsWith('/settings')
+  const isProtected = pathname.startsWith('/seller/') || pathname === '/seller' || 
+                      pathname.startsWith('/admin/') || pathname === '/admin' || 
+                      pathname.startsWith('/dashboard/') || pathname === '/dashboard' ||
+                      pathname.startsWith('/advisor/') || pathname === '/advisor' ||
+                      pathname.startsWith('/buyer/') || pathname === '/buyer' ||
+                      pathname.startsWith('/checkout/') || pathname === '/checkout' ||
+                      pathname.startsWith('/settings/') || pathname === '/settings'
 
   if (isMfaVerify) {
     // MFA verify page: user must be logged in (aal1), redirect to login if not

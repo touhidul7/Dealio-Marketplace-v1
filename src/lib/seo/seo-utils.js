@@ -1,4 +1,4 @@
-import seoPages from './seo-pages';
+import seoPages from './seo-pages.js';
 
 export function getSEOPageConfig(slugArray) {
   const slug = slugArray.join('/');
@@ -7,6 +7,12 @@ export function getSEOPageConfig(slugArray) {
 
 export async function getListingsForSEOPage(filters, supabase) {
   if (!filters) return [];
+
+  // Gracefully return empty listing array for missing database fields to activate the empty state CTA
+  if (filters.absentee_owner || filters.recurring_revenue) {
+    console.log('[SEO] Gracefully bypassing listing query for pending DB fields (absentee/recurring)');
+    return [];
+  }
 
   try {
     let query = supabase
@@ -29,8 +35,15 @@ export async function getListingsForSEOPage(filters, supabase) {
     if (filters.max_price) {
       query = query.lte('asking_price', filters.max_price);
     }
+    // Fixed: change database query from 'revenue' to 'annual_revenue'
     if (filters.min_revenue) {
-      query = query.gte('revenue', filters.min_revenue);
+      query = query.gte('annual_revenue', filters.min_revenue);
+    }
+    if (filters.min_cash_flow) {
+      query = query.gte('cash_flow', filters.min_cash_flow);
+    }
+    if (filters.profitable) {
+      query = query.gt('cash_flow', 0);
     }
     if (filters.seller_financing_available) {
       query = query.eq('seller_financing_available', true);

@@ -32,6 +32,22 @@ function getAppRoutes(dir, basePath = '') {
   return routes;
 }
 
+function hasListingsForFilters(filters, listings) {
+  if (!listings) return false;
+  return listings.some(item => {
+    if (filters.province && (!item.province_state || !item.province_state.toLowerCase().includes(filters.province.toLowerCase()))) {
+      return false;
+    }
+    if (filters.city && (!item.city || !item.city.toLowerCase().includes(filters.city.toLowerCase()))) {
+      return false;
+    }
+    if (filters.industry && (!item.industry || !item.industry.toLowerCase().includes(filters.industry.toLowerCase()))) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export default async function sitemap() {
   const baseUrl = 'https://www.dealiomarketplace.com';
 
@@ -46,21 +62,25 @@ export default async function sitemap() {
     priority: route === '/' ? 1 : 0.8,
   }));
 
-  // SEO programmatic routes
-  const seoRoutes = seoPages
-    .filter(page => page.indexable)
-    .map((page) => ({
-      url: `${baseUrl}/${page.slug}`,
-      lastModified: new Date().toISOString(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    }));
-
-  // Blog dynamic routes
+  // Fetch all active listings in memory once to filter out empty combined pages
+  let activeListings = [];
   let blogRoutes = [];
   let requestRoutes = [];
+  
   try {
     const supabase = createAdminClient();
+
+    // Fetch listings
+    const { data: listings, error: listingsError } = await supabase
+      .from('listings')
+      .select('province_state, city, industry')
+      .eq('status', 'active');
+
+    if (!listingsError && listings) {
+      activeListings = listings;
+    } else if (listingsError) {
+      console.error('[SITEMAP] Error fetching active listings:', listingsError.message);
+    }
 
     // Fetch blogs
     const { data: blogs, error: blogError } = await supabase
@@ -94,6 +114,23 @@ export default async function sitemap() {
   } catch (err) {
     console.error('Error fetching dynamic data for sitemap:', err);
   }
+
+  // SEO programmatic routes
+  const seoRoutes = seoPages
+    .filter(page => {
+      if (!page.indexable) return false;
+      // Filter out industry-location combined pages with 0 active listings
+      if (page.type === 'industry-location') {
+        return hasListingsForFilters(page.filters, activeListings);
+      }
+      return true;
+    })
+    .map((page) => ({
+      url: `${baseUrl}/${page.slug}`,
+      lastModified: new Date().toISOString(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }));
 
   return [...routes, ...seoRoutes, ...blogRoutes, ...requestRoutes];
 }

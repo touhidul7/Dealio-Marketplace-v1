@@ -4,12 +4,12 @@ export const metadata = {
   title: 'Business Valuation Calculator Canada | Dealio Marketplace',
   description: 'Estimate the value of a Canadian small business using revenue, EBITDA, SDE, industry, growth, and owner involvement. Get a rough valuation range and next steps for selling your business.',
   alternates: {
-    canonical: 'https://dealiomarketplace.com/business-valuation-calculator'
+    canonical: 'https://www.dealiomarketplace.com/business-valuation-calculator'
   },
   openGraph: {
     title: 'Business Valuation Calculator Canada | Dealio Marketplace',
     description: 'Estimate the value of a Canadian small business using revenue, EBITDA, SDE, industry, growth, and owner involvement. Get a rough valuation range and next steps for selling your business.',
-    url: 'https://dealiomarketplace.com/business-valuation-calculator',
+    url: 'https://www.dealiomarketplace.com/business-valuation-calculator',
     type: 'website'
   }
 };
@@ -27,7 +27,7 @@ export default function BusinessValuationCalculatorPage() {
             "@type": "WebPage",
             "name": "Business Valuation Calculator Canada | Dealio Marketplace",
             "description": "Estimate the value of a Canadian small business using revenue, EBITDA, SDE, industry, growth, and owner involvement.",
-            "url": "https://dealiomarketplace.com/business-valuation-calculator"
+            "url": "https://www.dealiomarketplace.com/business-valuation-calculator"
           })
         }}
       />
@@ -95,13 +95,13 @@ export default function BusinessValuationCalculatorPage() {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Home",
-                "item": "https://dealiomarketplace.com/"
+                "item": "https://www.dealiomarketplace.com/"
               },
               {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "Business Valuation Calculator",
-                "item": "https://dealiomarketplace.com/business-valuation-calculator"
+                "item": "https://www.dealiomarketplace.com/business-valuation-calculator"
               }
             ]
           })
