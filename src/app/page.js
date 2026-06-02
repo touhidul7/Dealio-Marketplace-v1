@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { formatCurrency, INDUSTRIES } from '@/lib/constants';
+import { formatCurrency, formatListingPrice, INDUSTRIES } from '@/lib/constants';
 import styles from './page.module.css';
 
 export default function HomePage() {
@@ -15,7 +15,7 @@ export default function HomePage() {
     const fetchFeatured = async () => {
       const { data } = await supabase
         .from('listings')
-        .select('id, title, short_summary, industry, city, province_state, asking_price, featured_image_url, is_featured, confidentiality_mode')
+        .select('id, title, short_summary, industry, city, province_state, asking_price, asking_price_min, asking_price_max, featured_image_url, is_featured, confidentiality_mode')
         .eq('status', 'active')
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
@@ -101,7 +101,7 @@ export default function HomePage() {
                   </div>
                   <h3 className={styles.listingTitle}>{listing.title}</h3>
                   <p className={styles.listingSummary}>{listing.short_summary?.substring(0, 100)}{listing.short_summary?.length > 100 ? '...' : ''}</p>
-                  <div className={styles.listingPrice}>{formatCurrency(listing.asking_price)}</div>
+                  <div className={styles.listingPrice}>{formatListingPrice(listing)}</div>
                 </div>
               </Link>
             )) : (

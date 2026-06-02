@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { formatCurrency } from '@/lib/constants';
+import { formatCurrency, formatListingPrice } from '@/lib/constants';
 
 export async function generateMetadata({ params }) {
   const supabase = await createClient();
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }) {
   
   // Create description showing price and location if public
   const location = isConfidential ? 'Confidential Location' : `${listing.city || ''}, ${listing.province_state || ''}`.trim();
-  const price = formatCurrency(listing.asking_price);
+  const price = formatListingPrice(listing);
   
   const description = `${listing.industry} business for sale. Asking price: ${price}. Location: ${location}. ${listing.short_summary || ''}`;
 

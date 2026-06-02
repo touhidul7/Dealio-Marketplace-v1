@@ -3,7 +3,12 @@ export const INDUSTRIES = [
   'Construction', 'Transportation', 'Professional Services', 'Real Estate',
   'Hospitality', 'Education', 'Agriculture', 'Energy', 'Financial Services',
   'Automotive', 'Media & Entertainment', 'Wholesale & Distribution',
-  'Home Services', 'Fitness & Wellness', 'E-Commerce', 'Other'
+  'Home Services', 'Fitness & Wellness', 'E-Commerce',
+  'SaaS & Software', 'HVAC & Plumbing', 'Personal Care & Beauty',
+  'Childcare & Education', 'Senior Care & Assisted Living',
+  'Pet Services & Supplies', 'Business Services & B2B',
+  'Logistics & Warehousing', 'Waste Management & Recycling',
+  'Leisure, Recreation & Tourism', 'Franchise Businesses', 'Other'
 ];
 
 export const PROVINCES = [
@@ -73,6 +78,24 @@ export const LISTING_STATUSES = {
 export function formatCurrency(amount) {
   if (!amount && amount !== 0) return 'N/A';
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+}
+
+export function formatListingPrice(listing) {
+  if (!listing) return 'Upon Request';
+  if (typeof listing !== 'object') {
+    const formatted = formatCurrency(listing);
+    return formatted === 'N/A' ? 'Upon Request' : formatted;
+  }
+  const min = listing.asking_price_min;
+  const max = listing.asking_price_max;
+  if (min !== null && min !== undefined && min !== '' && max !== null && max !== undefined && max !== '') {
+    return `${formatCurrency(min)} – ${formatCurrency(max)}`;
+  }
+  const price = listing.asking_price;
+  if (price !== null && price !== undefined && price !== '') {
+    return formatCurrency(price);
+  }
+  return 'Upon Request';
 }
 
 export function formatDate(dateStr) {

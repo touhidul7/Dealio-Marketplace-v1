@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { formatCurrency } from '@/lib/constants';
+import { formatCurrency, formatListingPrice } from '@/lib/constants';
 
 export default function SavedListingsPage() {
   const [saved, setSaved] = useState([]);
@@ -14,7 +14,7 @@ export default function SavedListingsPage() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase.from('saved_listings').select('*, listings(id, title, industry, city, province_state, asking_price, featured_image_url)').eq('user_id', user.id).order('created_at', { ascending: false });
+      const { data } = await supabase.from('saved_listings').select('*, listings(id, title, industry, city, province_state, asking_price, asking_price_min, asking_price_max, featured_image_url)').eq('user_id', user.id).order('created_at', { ascending: false });
       setSaved(data || []);
       setLoading(false);
     };
@@ -54,7 +54,7 @@ export default function SavedListingsPage() {
                 <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>
                   📍 {[s.listings?.city, s.listings?.province_state].filter(Boolean).join(', ')}
                 </div>
-                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)' }}>{formatCurrency(s.listings?.asking_price)}</span>
+                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)' }}>{formatListingPrice(s.listings)}</span>
               </div>
             </Link>
           ))}

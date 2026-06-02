@@ -19,13 +19,19 @@ const calculateMatchScore = (listing, buyer) => {
   }
 
   // Deal Size Match (20 pts)
-  if (listing.asking_price) {
+  let price = listing.asking_price;
+  if (price === null || price === undefined) {
+    if (listing.asking_price_min !== null && listing.asking_price_min !== undefined && listing.asking_price_max !== null && listing.asking_price_max !== undefined) {
+      price = (Number(listing.asking_price_min) + Number(listing.asking_price_max)) / 2;
+    }
+  }
+  if (price !== null && price !== undefined) {
     maxScore += 20;
     const min = buyer.deal_size_min || 0;
     const max = buyer.deal_size_max || Infinity;
-    if (listing.asking_price >= min && listing.asking_price <= max) {
+    if (price >= min && price <= max) {
       score += 20;
-    } else if (listing.asking_price >= min * 0.8 && listing.asking_price <= max * 1.2) {
+    } else if (price >= min * 0.8 && price <= max * 1.2) {
       score += 10; // Partial match if within 20%
     }
   }

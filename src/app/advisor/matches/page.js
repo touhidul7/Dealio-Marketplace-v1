@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { formatCurrency } from '@/lib/constants';
+import { formatCurrency, formatListingPrice } from '@/lib/constants';
 
 function computeMatch(listing, profile) {
   let score = 0;
@@ -28,7 +28,14 @@ function computeMatch(listing, profile) {
     if (locations.length > 0 && listingProvince) reasons.push(`${listing.province_state} location`);
   }
 
-  const price = listing.asking_price || 0;
+  let price = listing.asking_price;
+  if (!price && price !== 0) {
+    if (listing.asking_price_min !== null && listing.asking_price_min !== undefined && listing.asking_price_max !== null && listing.asking_price_max !== undefined) {
+      price = (Number(listing.asking_price_min) + Number(listing.asking_price_max)) / 2;
+    } else {
+      price = 0;
+    }
+  }
   const minDeal = Number(profile.deal_size_min) || 0;
   const maxDeal = Number(profile.deal_size_max) || 0;
   const withinSize = (minDeal === 0 || price >= minDeal) && (maxDeal === 0 || price <= maxDeal);
@@ -63,7 +70,7 @@ export default function AdvisorMatchesPage() {
           user_id,
           listing_id,
           client:users!service_requests_user_id_fkey(full_name, email),
-          listings(id, title, industry, city, province_state, asking_price)
+          listings(id, title, industry, city, province_state, asking_price, asking_price_min, asking_price_max)
         `)
         .eq('assigned_to_user_id', user.id);
 
@@ -113,7 +120,7 @@ export default function AdvisorMatchesPage() {
     if (client.buyerProfile) {
       const { data: allListings } = await supabase
         .from('listings')
-        .select('id, title, industry, city, province_state, asking_price, featured_image_url')
+        .select('id, title, industry, city, province_state, asking_price, asking_price_min, asking_price_max, featured_image_url')
         .eq('status', 'active');
         
       if (allListings) {
@@ -233,7 +240,7 @@ export default function AdvisorMatchesPage() {
                               <Link href={`/listings/${m.item.id}`} target="_blank" style={{ color: 'var(--text-primary)' }}>{m.item.title}</Link>
                             </h3>
                             <div style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>
-                              {formatCurrency(m.item.asking_price)} • {m.item.industry}
+                              {formatListingPrice(m.item)} • {m.item.industry}
                             </div>
                           </>
                         ) : (

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { formatCurrency, timeAgo } from '@/lib/constants';
+import { formatCurrency, formatListingPrice, timeAgo } from '@/lib/constants';
 import styles from './buyer.module.css';
 
 function computeMatch(listing, profile) {
@@ -29,7 +29,14 @@ function computeMatch(listing, profile) {
     if (locations.length > 0 && listingProvince) reasons.push(`${listing.province_state} location`);
   }
 
-  const price = listing.asking_price || 0;
+  let price = listing.asking_price;
+  if (!price && price !== 0) {
+    if (listing.asking_price_min !== null && listing.asking_price_min !== undefined && listing.asking_price_max !== null && listing.asking_price_max !== undefined) {
+      price = (Number(listing.asking_price_min) + Number(listing.asking_price_max)) / 2;
+    } else {
+      price = 0;
+    }
+  }
   const minDeal = Number(profile.deal_size_min) || 0;
   const maxDeal = Number(profile.deal_size_max) || 0;
   const withinSize = (minDeal === 0 || price >= minDeal) && (maxDeal === 0 || price <= maxDeal);
@@ -56,7 +63,7 @@ export default function BuyerDashboard() {
     const load = async () => {
       const [{ data: bp }, { data: sv }, { data: inq }, { data: userRequests }] = await Promise.all([
         supabase.from('buyer_profiles').select('*').eq('user_id', user.id).single(),
-        supabase.from('saved_listings').select('*, listings(id, title, industry, city, province_state, asking_price, featured_image_url, status)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(6),
+        supabase.from('saved_listings').select('*, listings(id, title, industry, city, province_state, asking_price, asking_price_min, asking_price_max, featured_image_url, status)').eq('user_id', user.id).order('created_at', { ascending: false }).limit(6),
         supabase.from('inquiries').select('*, listings(title)').eq('buyer_user_id', user.id).order('created_at', { ascending: false }).limit(5),
         supabase.from('requests').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]);
@@ -65,7 +72,7 @@ export default function BuyerDashboard() {
       setInquiries(inq || []);
       setMyRequests(userRequests || []);
       if (bp) {
-        const { data: listingsData } = await supabase.from('listings').select('id, title, industry, city, province_state, asking_price, featured_image_url').eq('status', 'active');
+        const { data: listingsData } = await supabase.from('listings').select('id, title, industry, city, province_state, asking_price, asking_price_min, asking_price_max, featured_image_url').eq('status', 'active');
         if (listingsData) {
           const scored = listingsData
             .map(l => {
@@ -139,7 +146,7 @@ export default function BuyerDashboard() {
                 <div className={styles.matchBody}>
                   <span className="badge badge-primary" style={{marginBottom:6}}>{m.listings?.industry}</span>
                   <h3 style={{fontSize:15,fontWeight:700,marginBottom:4}}>{m.listings?.title}</h3>
-                  <span style={{fontSize:18,fontWeight:800,color:'var(--primary)'}}>{formatCurrency(m.listings?.asking_price)}</span>
+                  <span style={{fontSize:18,fontWeight:800,color:'var(--primary)'}}>{formatListingPrice(m.listings)}</span>
                 </div>
               </Link>
             ))}
@@ -165,7 +172,7 @@ export default function BuyerDashboard() {
                 <div className={styles.matchBody}>
                   <span className="badge badge-primary" style={{marginBottom:6}}>{s.listings?.industry}</span>
                   <h3 style={{fontSize:15,fontWeight:700,marginBottom:4}}>{s.listings?.title}</h3>
-                  <span style={{fontSize:18,fontWeight:800,color:'var(--primary)'}}>{formatCurrency(s.listings?.asking_price)}</span>
+                  <span style={{fontSize:18,fontWeight:800,color:'var(--primary)'}}>{formatListingPrice(s.listings)}</span>
                 </div>
               </Link>
             ))}

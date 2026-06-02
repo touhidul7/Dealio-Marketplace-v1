@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { formatCurrency, formatDate, LISTING_STATUSES } from '@/lib/constants';
+import { formatCurrency, formatListingPrice, formatDate, LISTING_STATUSES } from '@/lib/constants';
 import styles from './detail.module.css';
 
 export default function ListingDetailPage() {
@@ -131,7 +131,7 @@ export default function ListingDetailPage() {
               </div>
               <div className={styles.priceBlock}>
                 <span className={styles.priceLabel}>Asking Price</span>
-                <span className={styles.priceValue}>{formatCurrency(listing.asking_price)}</span>
+                <span className={styles.priceValue}>{formatListingPrice(listing)}</span>
               </div>
             </div>
 
@@ -144,8 +144,7 @@ export default function ListingDetailPage() {
                 {listing.cash_flow && <div className={styles.finItem}><span>Cash Flow</span><strong>{formatCurrency(listing.cash_flow)}</strong></div>}
                 <div className={styles.finItem}><span>Inventory Included</span><strong>{listing.inventory_included ? 'Yes' : 'No'}</strong></div>
                 <div className={styles.finItem}><span>Real Estate Included</span><strong>{listing.real_estate_included ? 'Yes' : 'No'}</strong></div>
-                {listing.year_established && <div className={styles.finItem}><span>Year Established</span><strong>{listing.year_established}</strong></div>}
-                {listing.employees_count && <div className={styles.finItem}><span>Employees</span><strong>{listing.employees_count}</strong></div>}
+                {(listing.seller_financing_available) && <div className={styles.finItem}><span>Seller Financing</span><strong>Available</strong></div>}
               </div>
             </div>
 
@@ -178,6 +177,74 @@ export default function ListingDetailPage() {
               <div className={styles.section}>
                 <h2 className={styles.sectionTitle}>Ideal Buyer</h2>
                 <div className={styles.prose}>{listing.ideal_buyer}</div>
+              </div>
+            )}
+
+            {/* Property Information */}
+            {(listing.property_type || listing.premises_details || listing.year_established || listing.employees_count) && (
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>🏢 Property Information</h2>
+                <div className={styles.finGrid}>
+                  {listing.property_type && (
+                    <div className={styles.finItem}>
+                      <span>Premises Type</span>
+                      <strong style={{textTransform:'capitalize'}}>{listing.property_type.replace(/_/g,' ')}</strong>
+                    </div>
+                  )}
+                  {listing.year_established && <div className={styles.finItem}><span>Year Established</span><strong>{listing.year_established}</strong></div>}
+                  {listing.employees_count && <div className={styles.finItem}><span>Number of Employees</span><strong>{listing.employees_count}</strong></div>}
+                </div>
+                {listing.premises_details && (
+                  <div className={styles.prose} style={{marginTop:12}}>{listing.premises_details}</div>
+                )}
+              </div>
+            )}
+
+            {/* Business Operation */}
+            {(listing.management_type || listing.expansion_potential) && (
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>⚙️ Business Operation</h2>
+                {listing.management_type && (
+                  <div className={styles.finGrid} style={{marginBottom: listing.expansion_potential ? 12 : 0}}>
+                    <div className={styles.finItem}>
+                      <span>Management Type</span>
+                      <strong style={{textTransform:'capitalize'}}>{{ owner_operated: 'Owner Operated', semi_absentee: 'Semi-Absentee', manager_run: 'Manager Run', absentee: 'Absentee Owner' }[listing.management_type] || listing.management_type.replace(/_/g,' ')}</strong>
+                    </div>
+                  </div>
+                )}
+                {listing.expansion_potential && (
+                  <div className={styles.prose}>{listing.expansion_potential}</div>
+                )}
+              </div>
+            )}
+
+            {/* Other Information */}
+            {(listing.support_training || listing.seller_financing_available || listing.financing_details) && (
+              <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>ℹ️ Other Information</h2>
+                {listing.support_training && (
+                  <>
+                    <h3 style={{fontSize:14,fontWeight:600,color:'var(--text-secondary)',marginBottom:6,marginTop:0}}>Support &amp; Training</h3>
+                    <div className={styles.prose} style={{marginBottom:16}}>{listing.support_training}</div>
+                  </>
+                )}
+                {listing.seller_financing_available && (
+                  <div className={styles.finGrid} style={{marginBottom: listing.seller_financing_details ? 12 : 0}}>
+                    <div className={styles.finItem}>
+                      <span>Seller Financing</span>
+                      <strong style={{color:'var(--accent)'}}>✓ Available</strong>
+                    </div>
+                  </div>
+                )}
+                {listing.seller_financing_details && (
+                  <div className={styles.prose} style={{marginBottom: listing.financing_details ? 16 : 0}}>{listing.seller_financing_details}</div>
+                )}
+                {listing.financing_details && (
+                  <>
+                    <h3 style={{fontSize:14,fontWeight:600,color:'var(--text-secondary)',marginBottom:6,marginTop:listing.seller_financing_details ? 12 : 0}}>Additional Financing Details</h3>
+                    <div className={styles.prose}>{listing.financing_details}</div>
+                  </>
+                )}
               </div>
             )}
 

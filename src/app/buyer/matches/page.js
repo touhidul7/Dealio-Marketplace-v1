@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { formatCurrency } from '@/lib/constants';
+import { formatCurrency, formatListingPrice } from '@/lib/constants';
 
 function computeMatch(listing, profile) {
   let score = 0;
@@ -31,7 +31,14 @@ function computeMatch(listing, profile) {
   }
 
   // Deal size match (30 points)
-  const price = listing.asking_price || 0;
+  let price = listing.asking_price;
+  if (!price && price !== 0) {
+    if (listing.asking_price_min !== null && listing.asking_price_min !== undefined && listing.asking_price_max !== null && listing.asking_price_max !== undefined) {
+      price = (Number(listing.asking_price_min) + Number(listing.asking_price_max)) / 2;
+    } else {
+      price = 0;
+    }
+  }
   const minDeal = Number(profile.deal_size_min) || 0;
   const maxDeal = Number(profile.deal_size_max) || 0;
   const withinSize = (minDeal === 0 || price >= minDeal) && (maxDeal === 0 || price <= maxDeal);
@@ -69,7 +76,7 @@ export default function BuyerMatchesPage() {
       // Fetch all active listings
       const { data: listings } = await supabase
         .from('listings')
-        .select('id, title, industry, city, province_state, asking_price, featured_image_url, annual_revenue, ebitda')
+        .select('id, title, industry, city, province_state, asking_price, asking_price_min, asking_price_max, featured_image_url, annual_revenue, ebitda')
         .eq('status', 'active');
 
       if (!listings || listings.length === 0) {
@@ -153,7 +160,7 @@ export default function BuyerMatchesPage() {
                     📍 {[listing.city, listing.province_state].filter(Boolean).join(', ')}
                   </div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', marginBottom: 8 }}>
-                    {formatCurrency(listing.asking_price)}
+                    {formatListingPrice(listing)}
                   </div>
                   {reasons.length > 0 && (
                     <div style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>

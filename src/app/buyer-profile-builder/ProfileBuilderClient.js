@@ -27,7 +27,14 @@ const INDUSTRIES = [
   { id: 'Retail', label: 'Retail & Consumer', emoji: '🛍️' },
   { id: 'Construction', label: 'Construction & Trades', emoji: '🔨' },
   { id: 'Distribution', label: 'Distribution & Logistics', emoji: '📦' },
-  { id: 'Professional Services', label: 'Professional Services', emoji: '🤝' }
+  { id: 'Professional Services', label: 'Professional Services', emoji: '🤝' },
+  { id: 'PersonalCare', label: 'Personal Care & Beauty', emoji: '💇' },
+  { id: 'Childcare', label: 'Childcare & Education', emoji: '🧸' },
+  { id: 'SeniorCare', label: 'Senior Care & Assisted Living', emoji: '🦽' },
+  { id: 'PetServices', label: 'Pet Services & Supplies', emoji: '🐶' },
+  { id: 'BusinessServices', label: 'Business Services & B2B', emoji: '📈' },
+  { id: 'Logistics', label: 'Logistics & Warehousing', emoji: '🚛' },
+  { id: 'WasteManagement', label: 'Waste Management & Recycling', emoji: '♻️' }
 ];
 
 const BUDGET_RANGES = [

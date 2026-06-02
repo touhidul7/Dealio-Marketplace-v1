@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
-import { formatCurrency, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES } from '@/lib/constants';
+import { formatCurrency, formatListingPrice, timeAgo, LISTING_STATUSES, INQUIRY_STATUSES } from '@/lib/constants';
 
 export default function BrokerDashboardPage() {
   const { user } = useAuth();
@@ -107,7 +107,7 @@ export default function BrokerDashboardPage() {
                   <div key={listing.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 8, backgroundColor: 'var(--gray-50)', border: '1px solid var(--border)' }}>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>{listing.title}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{formatCurrency(listing.asking_price)}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{formatListingPrice(listing)}</div>
                     </div>
                     <span className="badge" style={{ fontSize: 11, backgroundColor: `var(--${st?.color || 'gray'}-50)`, color: `var(--${st?.color || 'gray'}-600)`, flexShrink: 0 }}>
                       {st?.label || listing.status}

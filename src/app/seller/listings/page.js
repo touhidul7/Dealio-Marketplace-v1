@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
-import { formatCurrency, timeAgo, LISTING_STATUSES } from '@/lib/constants';
+import { formatCurrency, formatListingPrice, timeAgo, LISTING_STATUSES } from '@/lib/constants';
 
 function ListingsList() {
   const [listings, setListings] = useState([]);
@@ -118,7 +118,7 @@ function ListingsList() {
                     <td><strong>{l.title}</strong><br/><span style={{fontSize:12,color:'var(--text-tertiary)'}}>{l.industry}</span></td>
                     <td><span className={`badge badge-${LISTING_STATUSES[l.status]?.color || 'gray'}`}>{LISTING_STATUSES[l.status]?.label || l.status}</span></td>
                     <td style={{textTransform:'capitalize'}}>{l.package_type}</td>
-                    <td>{formatCurrency(l.asking_price)}</td>
+                    <td>{formatListingPrice(l)}</td>
                     <td style={{fontSize:13,color:'var(--text-tertiary)'}}>{timeAgo(l.created_at)}</td>
                     <td>
                       <div style={{display:'flex',gap:8}}>

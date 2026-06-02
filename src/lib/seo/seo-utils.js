@@ -33,7 +33,8 @@ export async function getListingsForSEOPage(filters, supabase) {
       query = query.ilike('industry', `%${filters.industry}%`);
     }
     if (filters.max_price) {
-      query = query.lte('asking_price', filters.max_price);
+      const val = Number(filters.max_price);
+      query = query.or(`asking_price.lte.${val},asking_price_min.lte.${val},asking_price_max.lte.${val}`);
     }
     // Fixed: change database query from 'revenue' to 'annual_revenue'
     if (filters.min_revenue) {

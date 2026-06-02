@@ -33,6 +33,12 @@ const INDUSTRIES_MULTIPLES = {
   'Fitness Studio': [1.5, 3.0],
   'Construction': [2.0, 3.5],
   'Digital Business': [2.0, 4.0],
+  'Personal Care & Spas': [1.5, 3.0],
+  'Pet Services & Supplies': [1.8, 3.5],
+  'Business Services & B2B': [2.0, 4.0],
+  'Logistics & Warehousing': [2.5, 4.5],
+  'Waste Management & Recycling': [3.0, 5.5],
+  'Leisure, Recreation & Tourism': [1.8, 3.5],
   'Other': [2.0, 3.5]
 };
 

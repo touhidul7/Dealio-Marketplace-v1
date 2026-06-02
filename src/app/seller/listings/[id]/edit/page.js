@@ -42,14 +42,35 @@ function EditListingWizard({ params }) {
         return;
       }
 
+      let pricing_type = 'fixed';
+      if (data.asking_price_min !== null && data.asking_price_max !== null) {
+        pricing_type = 'range';
+      } else if (data.asking_price === null) {
+        pricing_type = 'upon_request';
+      }
+
       setForm({
         ...data,
+        pricing_type,
         asking_price: data.asking_price || '',
+        asking_price_min: data.asking_price_min || '',
+        asking_price_max: data.asking_price_max || '',
         annual_revenue: data.annual_revenue || '',
         ebitda: data.ebitda || '',
         cash_flow: data.cash_flow || '',
         year_established: data.year_established || '',
         employees_count: data.employees_count || '',
+        // Property Information
+        property_type: data.property_type || '',
+        premises_details: data.premises_details || '',
+        // Business Operation
+        management_type: data.management_type || '',
+        expansion_potential: data.expansion_potential || '',
+        // Other Information
+        support_training: data.support_training || '',
+        seller_financing_available: data.seller_financing_available || false,
+        seller_financing_details: data.seller_financing_details || '',
+        financing_details: data.financing_details || '',
         inquiry_routing_type: data.lead_owner_type === 'dealio' ? 'dealio_inbox' : 'direct_to_seller'
       });
     };
@@ -84,6 +105,10 @@ function EditListingWizard({ params }) {
           if (!isNaN(val)) sanitizedForm[field] = val;
         }
       });
+      ['property_type', 'premises_details', 'management_type', 'expansion_potential',
+       'support_training', 'seller_financing_details', 'financing_details'].forEach(field => {
+        if (sanitizedForm[field] === '') sanitizedForm[field] = null;
+      });
 
       const payload = {
         title: sanitizedForm.title,
@@ -93,10 +118,25 @@ function EditListingWizard({ params }) {
         city: sanitizedForm.city,
         province_state: sanitizedForm.province_state,
         asking_price: sanitizedForm.asking_price,
+        asking_price_min: sanitizedForm.asking_price_min,
+        asking_price_max: sanitizedForm.asking_price_max,
         annual_revenue: sanitizedForm.annual_revenue,
         ebitda: sanitizedForm.ebitda,
         cash_flow: sanitizedForm.cash_flow,
         year_established: sanitizedForm.year_established,
+        reason_for_sale: sanitizedForm.reason_for_sale || null,
+        // Property
+        property_type: sanitizedForm.property_type,
+        premises_details: sanitizedForm.premises_details,
+        // Operation
+        management_type: sanitizedForm.management_type,
+        employees_count: sanitizedForm.employees_count,
+        expansion_potential: sanitizedForm.expansion_potential,
+        // Other
+        support_training: sanitizedForm.support_training,
+        seller_financing_available: sanitizedForm.seller_financing_available,
+        seller_financing_details: sanitizedForm.seller_financing_details,
+        financing_details: sanitizedForm.financing_details,
         lead_owner_type: form.inquiry_routing_type === 'dealio_inbox' ? 'dealio' : 'seller',
         featured_image_url: imageUrl,
         updated_at: new Date().toISOString()
@@ -171,8 +211,53 @@ function EditListingWizard({ params }) {
 
         {step === 1 && (
           <div className={styles.stepContent}>
+            <div className={styles.field} style={{ marginBottom: 20 }}>
+              <label>Asking Price Type</label>
+              <select value={form.pricing_type} onChange={e => {
+                const type = e.target.value;
+                setForm(f => ({
+                  ...f,
+                  pricing_type: type,
+                  asking_price: type === 'fixed' ? f.asking_price : '',
+                  asking_price_min: type === 'range' ? f.asking_price_min : '',
+                  asking_price_max: type === 'range' ? f.asking_price_max : ''
+                }));
+              }}>
+                <option value="fixed">Fixed Price</option>
+                <option value="range">Price Range</option>
+                <option value="upon_request">Upon Request (Contact for Price)</option>
+              </select>
+            </div>
+
+            {form.pricing_type === 'fixed' && (
+              <div className={styles.field} style={{ marginBottom: 20 }}>
+                <label>Asking Price ($)</label>
+                <input type="number" value={form.asking_price} onChange={e => set('asking_price', e.target.value)} placeholder="e.g. 1000000" />
+              </div>
+            )}
+
+            {form.pricing_type === 'range' && (
+              <div className={styles.grid} style={{ marginBottom: 20 }}>
+                <div className={styles.field}>
+                  <label>Minimum Price ($)</label>
+                  <input type="number" value={form.asking_price_min} onChange={e => set('asking_price_min', e.target.value)} placeholder="e.g. 900000" />
+                </div>
+                <div className={styles.field}>
+                  <label>Maximum Price ($)</label>
+                  <input type="number" value={form.asking_price_max} onChange={e => set('asking_price_max', e.target.value)} placeholder="e.g. 1100000" />
+                </div>
+              </div>
+            )}
+
+            {form.pricing_type === 'upon_request' && (
+              <div style={{ padding: 16, background: 'rgba(0, 0, 0, 0.02)', borderRadius: 12, border: '1px solid var(--border)', marginBottom: 20 }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
+                  ℹ️ <strong>Price Display:</strong> The asking price will be displayed as "Upon Request" to buyers on the search results and listing pages.
+                </p>
+              </div>
+            )}
+
             <div className={styles.grid}>
-              <div className={styles.field}><label>Asking Price ($)</label><input type="number" value={form.asking_price} onChange={e => set('asking_price', e.target.value)} /></div>
               <div className={styles.field}><label>Annual Revenue ($)</label><input type="number" value={form.annual_revenue} onChange={e => set('annual_revenue', e.target.value)} /></div>
               <div className={styles.field}><label>Cash Flow ($)</label><input type="number" value={form.cash_flow} onChange={e => set('cash_flow', e.target.value)} /></div>
               <div className={styles.field}><label>EBITDA ($)</label><input type="number" value={form.ebitda} onChange={e => set('ebitda', e.target.value)} /></div>
@@ -191,6 +276,82 @@ function EditListingWizard({ params }) {
                   <option value="">Select</option>
                   {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
+              </div>
+            </div>
+
+            {/* ── Property Information ── */}
+            <div style={{borderTop:'1px solid var(--border)',marginTop:24,paddingTop:20}}>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,color:'var(--text-primary)'}}>🏢 Property Information</h3>
+              <div className={styles.grid}>
+                <div className={styles.field}>
+                  <label>Premises Type</label>
+                  <select value={form.property_type} onChange={e => set('property_type', e.target.value)}>
+                    <option value="">Select type</option>
+                    <option value="leased">Leased</option>
+                    <option value="owned">Owned</option>
+                    <option value="home_based">Home Based</option>
+                    <option value="remote">Remote / Online</option>
+                    <option value="none">None Required</option>
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label>Premises Details</label>
+                  <textarea value={form.premises_details} onChange={e => set('premises_details', e.target.value)} placeholder="e.g. 2,500 sq ft retail space in a high-traffic mall" style={{height:80}} />
+                </div>
+              </div>
+            </div>
+
+            {/* ── Business Operation ── */}
+            <div style={{borderTop:'1px solid var(--border)',marginTop:24,paddingTop:20}}>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,color:'var(--text-primary)'}}>⚙️ Business Operation</h3>
+              <div className={styles.grid}>
+                <div className={styles.field}>
+                  <label>Management Type</label>
+                  <select value={form.management_type} onChange={e => set('management_type', e.target.value)}>
+                    <option value="">Select type</option>
+                    <option value="owner_operated">Owner Operated</option>
+                    <option value="semi_absentee">Semi-Absentee / Part-Time Owner</option>
+                    <option value="manager_run">Manager Run</option>
+                    <option value="absentee">Absentee Owner</option>
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <label>Number of Employees</label>
+                  <input type="number" value={form.employees_count} onChange={e => set('employees_count', e.target.value)} placeholder="e.g. 5" />
+                </div>
+              </div>
+              <div className={styles.field} style={{marginTop:12}}>
+                <label>Expansion Potential</label>
+                <textarea value={form.expansion_potential} onChange={e => set('expansion_potential', e.target.value)} placeholder="Describe growth opportunities or expansion potential" style={{height:90}} />
+              </div>
+              <div className={styles.field}>
+                <label>Reason for Sale</label>
+                <textarea value={form.reason_for_sale} onChange={e => set('reason_for_sale', e.target.value)} placeholder="e.g. Retirement, pursuing other ventures" style={{height:90}} />
+              </div>
+            </div>
+
+            {/* ── Other Information ── */}
+            <div style={{borderTop:'1px solid var(--border)',marginTop:24,paddingTop:20}}>
+              <h3 style={{fontSize:15,fontWeight:700,marginBottom:16,color:'var(--text-primary)'}}>ℹ️ Other Information</h3>
+              <div className={styles.field}>
+                <label>Support &amp; Training</label>
+                <textarea value={form.support_training} onChange={e => set('support_training', e.target.value)} placeholder="Describe transition support, training period, or post-sale involvement you're willing to offer" style={{height:90}} />
+              </div>
+              <div className={styles.field}>
+                <label style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',fontWeight:600}}>
+                  <input type="checkbox" checked={form.seller_financing_available} onChange={e => set('seller_financing_available', e.target.checked)} style={{width:18,height:18}} />
+                  Seller / Owner Financing Available
+                </label>
+              </div>
+              {form.seller_financing_available && (
+                <div className={styles.field}>
+                  <label>Seller Financing Terms</label>
+                  <textarea value={form.seller_financing_details} onChange={e => set('seller_financing_details', e.target.value)} placeholder="e.g. Up to 30% seller financing available at 5% interest over 3 years" style={{height:80}} />
+                </div>
+              )}
+              <div className={styles.field}>
+                <label>Additional Financing Details (Optional)</label>
+                <textarea value={form.financing_details} onChange={e => set('financing_details', e.target.value)} placeholder="e.g. SBA eligible, bank financing available, earn-out structures considered" style={{height:80}} />
               </div>
             </div>
           </div>
@@ -233,8 +394,22 @@ function EditListingWizard({ params }) {
         {step === 5 && (
           <div className={styles.stepContent}>
             <div className={styles.reviewGrid}>
-              <div className={styles.reviewSection}><h3>Business</h3><p>{form.title} ({form.industry})</p></div>
-              <div className={styles.reviewSection}><h3>Financials</h3><p>Price: ${form.asking_price} | Revenue: ${form.annual_revenue}</p></div>
+              <div className={styles.reviewSection}><h3>Business</h3><dl>{[['Title', form.title],['Industry', form.industry],['Location', `${form.city}, ${form.province_state}`]].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd>{v}</dd></div>)}</dl></div>
+              <div className={styles.reviewSection}><h3>Financials</h3><dl>{[
+                ['Asking Price', form.pricing_type === 'upon_request' ? 'Upon Request' : form.pricing_type === 'range' ? `$${form.asking_price_min} - $${form.asking_price_max}` : `$${form.asking_price}`],
+                ['Revenue', form.annual_revenue ? `$${form.annual_revenue}` : 'N/A'],
+                ['EBITDA', form.ebitda ? `$${form.ebitda}` : 'N/A'],
+                ['Seller Financing', form.seller_financing_available ? 'Yes' : 'No'],
+              ].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd>{v}</dd></div>)}</dl></div>
+              <div className={styles.reviewSection}><h3>Property &amp; Operation</h3><dl>{[
+                ['Premises Type', form.property_type || 'Not specified'],
+                ['Management', form.management_type ? form.management_type.replace(/_/g,' ') : 'Not specified'],
+                ['Employees', form.employees_count || 'Not specified'],
+                ['Year Established', form.year_established || 'Not specified'],
+              ].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd style={{textTransform:'capitalize'}}>{v}</dd></div>)}</dl></div>
+              <div className={styles.reviewSection}><h3>Lead Routing</h3><dl>{[
+                ['Routing', form.inquiry_routing_type],
+              ].map(([k,v])=><div key={k} className={styles.reviewRow}><dt>{k}</dt><dd style={{textTransform:'capitalize'}}>{v}</dd></div>)}</dl></div>
             </div>
             <p style={{color:'var(--text-secondary)',fontSize:14,marginTop:16}}>Review your changes before saving. The listing status will remain unchanged.</p>
           </div>

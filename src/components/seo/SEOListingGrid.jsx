@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { formatListingPrice } from '@/lib/constants';
 
 export default function SEOListingGrid({ listings }) {
   if (!listings || listings.length === 0) {
@@ -44,7 +45,7 @@ export default function SEOListingGrid({ listings }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <strong>Asking Price:</strong>
-                <span>{listing.asking_price ? `$${Number(listing.asking_price).toLocaleString()}` : 'Contact for Price'}</span>
+                <span>{formatListingPrice(listing)}</span>
               </div>
               {listing.revenue > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>

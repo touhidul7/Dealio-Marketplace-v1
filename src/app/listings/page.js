@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { formatCurrency, INDUSTRIES, PROVINCES } from '@/lib/constants';
+import { formatCurrency, formatListingPrice, INDUSTRIES, PROVINCES } from '@/lib/constants';
 import styles from './listings.module.css';
 
 function ListingsContent() {
@@ -56,8 +56,14 @@ function ListingsContent() {
 
       if (f.industry) query = query.eq('industry', f.industry);
       if (f.province) query = query.eq('province_state', f.province);
-      if (f.priceMin) query = query.gte('asking_price', Number(f.priceMin));
-      if (f.priceMax) query = query.lte('asking_price', Number(f.priceMax));
+      if (f.priceMin) {
+        const val = Number(f.priceMin);
+        query = query.or(`asking_price.gte.${val},asking_price_min.gte.${val},asking_price_max.gte.${val}`);
+      }
+      if (f.priceMax) {
+        const val = Number(f.priceMax);
+        query = query.or(`asking_price.lte.${val},asking_price_min.lte.${val},asking_price_max.lte.${val}`);
+      }
       if (f.q) query = query.or(`title.ilike.%${f.q}%,short_summary.ilike.%${f.q}%,industry.ilike.%${f.q}%`);
 
       if (f.sortBy === 'newest') query = query.order('created_at', { ascending: false });
@@ -207,7 +213,7 @@ function ListingsContent() {
                   <h3 className={styles.cardTitle}>{listing.title}</h3>
                   <p className={styles.cardSummary}>{listing.short_summary?.substring(0, 120)}{listing.short_summary?.length > 120 ? '...' : ''}</p>
                   <div className={styles.cardFooter}>
-                    <div className={styles.cardPrice}>{formatCurrency(listing.asking_price)}</div>
+                    <div className={styles.cardPrice}>{formatListingPrice(listing)}</div>
                     <span className="btn btn-sm btn-primary">View Details →</span>
                   </div>
                 </div>
